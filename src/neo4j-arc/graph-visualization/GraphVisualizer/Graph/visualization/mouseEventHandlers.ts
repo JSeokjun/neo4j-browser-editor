@@ -19,7 +19,7 @@
  */
 import { D3DragEvent, drag as d3Drag } from 'd3-drag'
 import { Simulation } from 'd3-force'
-import { BaseType, Selection } from 'd3-selection'
+import { BaseType, Selection, pointer as d3Pointer } from 'd3-selection'
 
 import {
   DEFAULT_ALPHA_TARGET,
@@ -31,15 +31,21 @@ import { RelationshipModel } from '../../../models/Relationship'
 
 export const nodeEventHandlers = (
   selection: Selection<SVGGElement, NodeModel, BaseType, unknown>,
-  trigger: (event: string, node: NodeModel) => void,
+  trigger: (
+    event: string,
+    node: NodeModel,
+    properties?: Record<string, unknown>
+  ) => void,
   simulation: Simulation<NodeModel, RelationshipModel>
 ) => {
   let initialDragPosition: [number, number]
   let restartedSimulation = false
   const tolerance = 25
 
-  const onNodeClick = (_event: Event, node: NodeModel) => {
-    trigger('nodeClicked', node)
+  const onNodeClick = (event: Event, node: NodeModel) => {
+    trigger('nodeClicked', node, {
+      shiftKey: (event as MouseEvent).shiftKey
+    })
   }
 
   const onNodeDblClick = (_event: Event, node: NodeModel) => {
@@ -119,11 +125,17 @@ export const nodeEventHandlers = (
 
 export const relationshipEventHandlers = (
   selection: Selection<SVGGElement, RelationshipModel, BaseType, unknown>,
-  trigger: (event: string, rel: RelationshipModel) => void
+  trigger: (
+    event: string,
+    rel: RelationshipModel,
+    properties?: Record<string, unknown>
+  ) => void
 ) => {
   const onRelationshipClick = (event: Event, rel: RelationshipModel) => {
     event.stopPropagation()
-    trigger('relationshipClicked', rel)
+    trigger('relationshipClicked', rel, {
+      shiftKey: (event as MouseEvent).shiftKey
+    })
   }
 
   const onRelMouseOver = (_event: Event, rel: RelationshipModel) => {
@@ -134,8 +146,22 @@ export const relationshipEventHandlers = (
     trigger('relMouseOut', rel)
   }
 
+  const onRelationshipContextMenu = (event: Event, rel: RelationshipModel) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    const [pointerX] = d3Pointer(
+      event as MouseEvent,
+      event.currentTarget as any
+    )
+    const endpoint = pointerX <= rel.centreDistance / 2 ? 'source' : 'target'
+
+    trigger('relationshipEndpointContextMenu', rel, { endpoint })
+  }
+
   return selection
     .on('mousedown', onRelationshipClick)
     .on('mouseover', onRelMouseOver)
     .on('mouseout', onRelMouseOut)
+    .on('contextmenu', onRelationshipContextMenu)
 }

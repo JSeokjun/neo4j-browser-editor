@@ -26,7 +26,7 @@ jobs:
         run: docker compose -f docker-compose.yml up -d --remove-orphans
       - name: Wait for Keycloak and Neo4j config containers to finish
         run: sleep 90
-      - run: npx serve -l 8080 dist & npm run wait-on-neo4j && yarn wait-on-dev
+      - run: npx serve -l 4542 dist & npm run wait-on-neo4j && yarn wait-on-dev
       - run: echo "Servers ready!"
       - run: yarn e2e-sso
       - name: Upload test screenshots

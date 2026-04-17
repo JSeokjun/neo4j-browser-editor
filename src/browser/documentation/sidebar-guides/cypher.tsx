@@ -18,114 +18,119 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import React from 'react'
+import { useT } from 'shared/i18n'
 
-import { BuiltInGuideSidebarSlide } from '../../modules/Carousel/Slide'
+import { BuiltInGuideSidebarSlide } from 'browser/modules/Carousel/Slide'
 
-const title = 'Cypher Guide'
-const identifier = 'cypher'
-const slides = [
-  <BuiltInGuideSidebarSlide key="s1">
-    <p className="lead">
-      <em>{`Neo4j's graph query language`}</em>
-    </p>
-    <p>
-      {`Neo4j's Cypher language is purpose-built for working with graph data.`}
-    </p>
-    <ul className="big">
-      <li>Uses patterns to describe graph data.</li>
-      <li>Familiar SQL-like clauses.</li>
-      <li>Declarative, describing what to find, not how to find it.</li>
-    </ul>
-  </BuiltInGuideSidebarSlide>,
-  <BuiltInGuideSidebarSlide key="s2">
-    <h3>CREATE</h3>
-    <p className="lead">
-      <em>Create a node</em>
-    </p>
-    <p>{`Let's use Cypher to generate a small social graph.`}</p>
-    <p>
-      <b>NOTE:</b>
-      {` This guide assumes that you use an empty graph. `}
-    </p>
-    <ol>
-      <li>
-        Click this code block and bring it into the Editor:
-        <pre className="pre-scrollable code runnable">
-          {"CREATE (ee:Person {name: 'Emil', from: 'Sweden', kloutScore: 99})"}
-        </pre>
-        <ul style={{ marginLeft: '10px', paddingLeft: '10px' }}>
-          <li>
-            <code>CREATE</code> creates the node.
-          </li>
-          <li>
-            <code>()</code> indicates the node.
-          </li>
-          <li>
-            <code>ee:Person</code> – <code>ee</code> is the node variable and
-            <code>Person</code> is the node label.
-          </li>
-          <li>
-            <code>{'{}'}</code> contains the properties that describe the node.
-          </li>
-        </ul>
-      </li>
-      <li>
-        Run the Cypher code by clicking the <b>Run</b> button.
-      </li>
-    </ol>
-  </BuiltInGuideSidebarSlide>,
-  <BuiltInGuideSidebarSlide key="s3">
-    <h3>MATCH</h3>
-    <p className="lead">
-      <em>Find nodes</em>
-    </p>
-    <p>Now, find the node representing Emil.</p>
-    <ol>
-      <li>
-        Click this code block and bring it into the Editor:
-        <pre className="pre-scrollable code runnable">
-          {`MATCH (ee:Person) WHERE ee.name = 'Emil' RETURN ee;`}
-        </pre>
-        <ul style={{ marginLeft: '10px', paddingLeft: '10px' }}>
-          <li>
-            <code>MATCH</code> specifies a pattern of nodes and relationships.
-          </li>
-          <li>
-            <code>(ee:Person)</code> is a single node pattern with label{' '}
-            <code>Person</code>. It assigns matches to the variable{' '}
-            <code>ee</code>.
-          </li>
-          <li>
-            <code>WHERE</code> filters the query.
-          </li>
-          <li>
-            <code>{`ee.name = 'Emil'`}</code>
-            {` compares name property to the
-            value `}
-            <code>Emil</code>.
-          </li>
-          <li>
-            <code>RETURN</code> returns particular results.
-          </li>
-        </ul>
-      </li>
-      <li>
-        Run the Cypher code by clicking the <b>Run</b> button.
-      </li>
-      <br />
-    </ol>
-  </BuiltInGuideSidebarSlide>,
-  <BuiltInGuideSidebarSlide key="s4">
-    <h3>CREATE more data</h3>
-    <p className="lead">
-      <em>Nodes and relationships</em>
-    </p>
-    <p>
-      The <code>CREATE</code> clause can create many nodes and relationships at
-      once.
-    </p>
-    <pre className="pre-scrollable code runnable">
-      {`MATCH (ee:Person) WHERE ee.name = 'Emil'
+function Slide1() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <p className="lead">
+        <em>{t('cypher.s1.lead')}</em>
+      </p>
+      <p>{t('cypher.s1.desc')}</p>
+      <ul className="big">
+        <li>{t('cypher.s1.li1')}</li>
+        <li>{t('cypher.s1.li2')}</li>
+        <li>{t('cypher.s1.li3')}</li>
+      </ul>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+function Slide2() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('cypher.s2.title')}</h3>
+      <p className="lead">
+        <em>{t('cypher.s2.lead')}</em>
+      </p>
+      <p>{t('cypher.s2.desc')}</p>
+      <p>
+        <b>NOTE:</b> {t('cypher.s2.note')}
+      </p>
+      <ol>
+        <li>
+          {t('cypher.s2.clickCode')}
+          <pre className="pre-scrollable code runnable">
+            {
+              "CREATE (ee:Person {name: 'Emil', from: 'Sweden', kloutScore: 99})"
+            }
+          </pre>
+          <ul style={{ marginLeft: '10px', paddingLeft: '10px' }}>
+            <li>
+              <code>CREATE</code> {t('cypher.s2.createExplain')}
+            </li>
+            <li>
+              <code>()</code> {t('cypher.s2.parenExplain')}
+            </li>
+            <li>
+              <code>ee:Person</code> {t('cypher.s2.varExplain')}
+            </li>
+            <li>
+              <code>{'{}'}</code> {t('cypher.s2.propsExplain')}
+            </li>
+          </ul>
+        </li>
+        <li>{t('cypher.s2.runButton')}</li>
+      </ol>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+function Slide3() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('cypher.s3.title')}</h3>
+      <p className="lead">
+        <em>{t('cypher.s3.lead')}</em>
+      </p>
+      <p>{t('cypher.s3.desc')}</p>
+      <ol>
+        <li>
+          {t('cypher.s3.clickCode')}
+          <pre className="pre-scrollable code runnable">
+            {`MATCH (ee:Person) WHERE ee.name = 'Emil' RETURN ee;`}
+          </pre>
+          <ul style={{ marginLeft: '10px', paddingLeft: '10px' }}>
+            <li>
+              <code>MATCH</code> {t('cypher.s3.matchExplain')}
+            </li>
+            <li>
+              <code>(ee:Person)</code> {t('cypher.s3.patternExplain')}
+            </li>
+            <li>
+              <code>WHERE</code> {t('cypher.s3.whereExplain')}
+            </li>
+            <li>
+              <code>{`ee.name = 'Emil'`}</code> {t('cypher.s3.compareExplain')}
+            </li>
+            <li>
+              <code>RETURN</code> {t('cypher.s3.returnExplain')}
+            </li>
+          </ul>
+        </li>
+        <li>{t('cypher.s3.runButton')}</li>
+        <br />
+      </ol>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+function Slide4() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('cypher.s4.title')}</h3>
+      <p className="lead">
+        <em>{t('cypher.s4.lead')}</em>
+      </p>
+      <p>{t('cypher.s4.desc')}</p>
+      <pre className="pre-scrollable code runnable">
+        {`MATCH (ee:Person) WHERE ee.name = 'Emil'
 CREATE (js:Person { name: 'Johan', from: 'Sweden', learn: 'surfing' }),
 (ir:Person { name: 'Ian', from: 'England', title: 'author' }),
 (rvb:Person { name: 'Rik', from: 'Belgium', pet: 'Orval' }),
@@ -134,70 +139,84 @@ CREATE (js:Person { name: 'Johan', from: 'Sweden', learn: 'surfing' }),
 (js)-[:KNOWS]->(ir),(js)-[:KNOWS]->(rvb),
 (ir)-[:KNOWS]->(js),(ir)-[:KNOWS]->(ally),
 (rvb)-[:KNOWS]->(ally)`}
-    </pre>
-    <br />
-  </BuiltInGuideSidebarSlide>,
+      </pre>
+      <br />
+    </BuiltInGuideSidebarSlide>
+  )
+}
 
-  <BuiltInGuideSidebarSlide key="s5">
-    <h3>MATCH patterns</h3>
-    <p className="lead">
-      <em>Describe what to find in the graph</em>
-    </p>
-    <p className="summary">
-      {`For instance, a pattern can be used to find Emil's friends:`}
-    </p>
-    <pre className="pre-scrollable code runnable">
-      {`MATCH (ee:Person)-[:KNOWS]-(friends)
+function Slide5() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('cypher.s5.title')}</h3>
+      <p className="lead">
+        <em>{t('cypher.s5.lead')}</em>
+      </p>
+      <p className="summary">{t('cypher.s5.desc')}</p>
+      <pre className="pre-scrollable code runnable">
+        {`MATCH (ee:Person)-[:KNOWS]-(friends)
 WHERE ee.name = 'Emil' RETURN ee, friends`}
-    </pre>
-    <ul style={{ marginLeft: '10px', paddingLeft: '10px' }}>
-      <li>
-        <code>MATCH</code> describes what nodes will be retrieved based upon the
-        pattern.
-      </li>
-      <li>
-        <code>(ee)</code> is the node reference that will be returned based upon
-        the <code>WHERE</code> clause.
-      </li>
-      <li>
-        <code>-[:KNOWS]-</code> matches the <code>KNOWS</code> relationships (in
-        either direction) from <code>ee</code>.
-      </li>
-      <li>
-        <code>(friends)</code>
-        {` represents the nodes that are Emil's friends.`}
-      </li>
-      <li>
-        <code>RETURN</code> returns the node, referenced here by{' '}
-        <code>(ee)</code>, and the related <code>(friends)</code> nodes found.
-      </li>
-    </ul>
-  </BuiltInGuideSidebarSlide>,
+      </pre>
+      <ul style={{ marginLeft: '10px', paddingLeft: '10px' }}>
+        <li>
+          <code>MATCH</code> {t('cypher.s5.matchExplain')}
+        </li>
+        <li>
+          <code>(ee)</code> {t('cypher.s5.eeExplain')}
+        </li>
+        <li>
+          <code>-[:KNOWS]-</code> {t('cypher.s5.knowsExplain')}
+        </li>
+        <li>
+          <code>(friends)</code> {t('cypher.s5.friendsExplain')}
+        </li>
+        <li>
+          <code>RETURN</code> {t('cypher.s5.returnExplain')}
+        </li>
+      </ul>
+    </BuiltInGuideSidebarSlide>
+  )
+}
 
-  <BuiltInGuideSidebarSlide key="s6">
-    <h3>Next steps</h3>
-    <ul className="undecorated">
-      <li>
-        <a data-exec="guide movie-graph">The Movie Graph</a> – Queries and
-        recommendations with Cypher - movie use case.
-      </li>
-      <li>
-        <a data-exec="guide northwind-graph">The Northwind Graph</a> – Translate
-        and import relation data into graph.
-      </li>
-    </ul>
-    <br />
-    <h3>References</h3>
-    <ul className="undecorated">
-      <li>
-        <a help-topic="commands">Help commands</a> - Useful Neo4j Browser
-        commands
-      </li>
-      <li>
-        <a help-topic="keys">Help keys</a> - Keyboard shortcuts
-      </li>
-    </ul>
-  </BuiltInGuideSidebarSlide>
+function Slide6() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('cypher.s6.title')}</h3>
+      <ul className="undecorated">
+        <li>
+          <a data-exec="guide movie-graph">{t('cypher.s6.movieLink')}</a>
+        </li>
+        <li>
+          <a data-exec="guide northwind-graph">
+            {t('cypher.s6.northwindLink')}
+          </a>
+        </li>
+      </ul>
+      <br />
+      <h3>{t('cypher.s6.references')}</h3>
+      <ul className="undecorated">
+        <li>
+          <a help-topic="commands">{t('cypher.s6.helpCommands')}</a>
+        </li>
+        <li>
+          <a help-topic="keys">{t('cypher.s6.helpKeys')}</a>
+        </li>
+      </ul>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+const title = 'Cypher Guide'
+const identifier = 'cypher'
+const slides = [
+  <Slide1 key="s1" />,
+  <Slide2 key="s2" />,
+  <Slide3 key="s3" />,
+  <Slide4 key="s4" />,
+  <Slide5 key="s5" />,
+  <Slide6 key="s6" />
 ]
 
 export default { title, identifier, slides }

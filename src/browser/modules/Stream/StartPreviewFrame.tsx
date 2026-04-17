@@ -27,6 +27,7 @@ import {
   getActiveConnectionData
 } from 'shared/modules/connections/connectionsDuck'
 import { trackNavigateToPreview } from 'shared/modules/preview/previewDuck'
+import { useT } from 'shared/i18n'
 
 const navigateToPreview = (db?: string | null, dbms?: string | null): void => {
   const url = new URL('https://browser.neo4j.io/')
@@ -50,6 +51,8 @@ const PreviewFrame = ({
   connectionData,
   executeTrackNavigateToPreview
 }: PreviewFrameProps) => {
+  const t = useT()
+
   function trackAndNavigateToPreview() {
     executeTrackNavigateToPreview()
     navigateToPreview(connectionData?.db, connectionData?.host)
@@ -60,42 +63,39 @@ const PreviewFrame = ({
       <div className="teasers">
         <div className="teaser teaser-advertise teaser-3">
           <img src="./assets/images/clusters.svg" className="img-advertise" />
-          <h3>🚀 Try the new hosted Browser!</h3>
-          <p>
-            Switch to the hosted Browser to access all of the latest features.
-          </p>
+          <h3>{t('start.hostedBrowser.title')}</h3>
+          <p>{t('start.hostedBrowser.description')}</p>
           <button
             onClick={trackAndNavigateToPreview}
             className="btn btn-advertise"
           >
-            {"Let's go"}
+            {t('start.hostedBrowser.button')}
           </button>
         </div>
 
         <div className="teaser teaser-3">
-          <h3>Try Neo4j with live data</h3>
-          <p className="lead">
-            A complete example graph that demonstrates common query patterns.
-          </p>
+          <h3>{t('start.tryNeo4j.title')}</h3>
+          <p className="lead">{t('start.tryNeo4j.lead')}</p>
           <div className="icon-holder">
-            <p>Actors & movies in cross-referenced pop culture.</p>
+            <p>{t('start.tryNeo4j.description')}</p>
             <div className="clearfix" />
           </div>
           <button exec-topic="guide movie-graph" className="btn btn-cta">
-            Open guide
+            {t('start.graphEditing.openGuide')}
           </button>
         </div>
         <div className="teaser teaser-3">
-          <h3>Cypher basics</h3>
-          <p className="lead">Intro to Graphs with Cypher </p>
+          <h3>{t('start.graphEditing.title')}</h3>
+          <p className="lead">{t('start.graphEditing.lead')}</p>
 
           <ul className="topic-bullets">
-            <li>What is a graph database?</li>
-            <li>How can I query a graph?</li>
+            <li>{t('start.graphEditing.bullet1')}</li>
+            <li>{t('start.graphEditing.bullet2')}</li>
+            <li>{t('start.graphEditing.bullet3')}</li>
           </ul>
           <div className="clearfix" />
-          <button exec-topic="guide cypher" className="btn btn-cta">
-            Start querying
+          <button exec-topic="guide graph-editing" className="btn btn-cta">
+            {t('start.graphEditing.openGuide')}
           </button>
         </div>
       </div>

@@ -75,6 +75,8 @@ export type GraphProps = {
   disableWheelZoomInfoMessage: () => void
   initialZoomToFit?: boolean
   onGraphInteraction?: GraphInteractionCallBack
+  onMultiSelectionChanged?: (items: VizItem[]) => void
+  initialNodePositions?: Record<string, { x: number; y: number }>
 }
 
 type GraphState = {
@@ -134,6 +136,21 @@ export class Graph extends React.Component<GraphProps, GraphState> {
     })
 
     const graph = createGraph(nodes, relationships)
+
+    // Restore node positions from previous render to prevent layout jumping
+    if (this.props.initialNodePositions) {
+      const positions = this.props.initialNodePositions
+      graph.nodes().forEach(node => {
+        const pos = positions[node.id]
+        if (pos) {
+          node.x = pos.x
+          node.y = pos.y
+          node.fx = pos.x
+          node.fy = pos.y
+        }
+      })
+    }
+
     this.visualization = new Visualization(
       this.svgElement.current,
       measureSize,
@@ -153,7 +170,8 @@ export class Graph extends React.Component<GraphProps, GraphState> {
       onItemMouseOver,
       onItemSelect,
       onGraphModelChange,
-      onGraphInteraction
+      onGraphInteraction,
+      this.props.onMultiSelectionChanged
     )
     graphEventHandler.bindEventHandlers()
 

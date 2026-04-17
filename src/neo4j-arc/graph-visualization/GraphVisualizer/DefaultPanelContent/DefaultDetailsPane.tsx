@@ -17,9 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
-import { ClipboardCopier, PropertiesTable, upperFirst } from 'neo4j-arc/common'
+import {
+  ClipboardCopier,
+  PropertiesTable,
+  VizItemProperty
+} from 'neo4j-arc/common'
 import { NodeItem, RelationshipItem } from '../../types'
 
 import { PaneBody, PaneHeader, PaneTitle, PaneWrapper } from './styled'
@@ -32,15 +36,39 @@ export type DetailsPaneProps = {
   vizItem: NodeItem | RelationshipItem
   graphStyle: GraphStyleModel
   nodeInspectorWidth: number
+  editable?: boolean
+  onPropertyListChange?: (propertyList: VizItemProperty[]) => void
+  onNodeLabelsChange?: (labels: string[]) => void
+  onCreateRelationship?: (targetNodeId: string, type: string) => void
+  onDeleteRelationship?: () => void
+  onReverseRelationship?: () => void
+  onReconnectRelationship?: (startNodeId: string, endNodeId: string) => void
+  onRelationshipTypeChange?: (newType: string) => void
+  onValidationWarning?: (message: string) => void
+  t?: (key: string, params?: Record<string, string | number>) => string
 }
 export function DefaultDetailsPane({
   vizItem,
   graphStyle,
-  nodeInspectorWidth
+  nodeInspectorWidth,
+  editable = false,
+  onPropertyListChange,
+  onNodeLabelsChange: _onNodeLabelsChange,
+  onCreateRelationship: _onCreateRelationship,
+  onDeleteRelationship: _onDeleteRelationship,
+  onReverseRelationship: _onReverseRelationship,
+  onReconnectRelationship: _onReconnectRelationship,
+  t: tProp
 }: DetailsPaneProps): JSX.Element {
+  const t = tProp || ((key: string) => key)
   const [maxPropertiesCount, setMaxPropertiesCount] = useState(
     DETAILS_PANE_STEP_SIZE
   )
+  const [propertyList, setPropertyList] = useState(vizItem.item.propertyList)
+
+  useEffect(() => {
+    setPropertyList(vizItem.item.propertyList)
+  }, [vizItem])
 
   const idProperty = {
     key: '<id>',
@@ -55,7 +83,7 @@ export function DefaultDetailsPane({
   const allItemProperties = [
     idProperty,
     elementIdProperty,
-    ...vizItem.item.propertyList
+    ...propertyList
   ].sort((a, b) => (a.key < b.key ? -1 : 1))
   const visibleItemProperties = allItemProperties.slice(0, maxPropertiesCount)
 
@@ -67,19 +95,23 @@ export function DefaultDetailsPane({
     <PaneWrapper>
       <PaneHeader>
         <PaneTitle>
-          <span>{`${upperFirst(vizItem.type)} properties`}</span>
+          <span>
+            {vizItem.type === 'node'
+              ? t('defaultDetails.nodeProperties')
+              : t('defaultDetails.relProperties')}
+          </span>
           <ClipboardCopier
             textToCopy={allItemProperties
               .map(prop => `${prop.key}: ${prop.value}`)
               .join('\n')}
-            titleText="Copy all properties to clipboard"
+            titleText={t('defaultDetails.copyAll')}
             iconSize={10}
           />
         </PaneTitle>
         {vizItem.type === 'relationship' && (
           <RelType
             selectedRelType={{
-              propertyKeys: vizItem.item.propertyList.map(p => p.key),
+              propertyKeys: propertyList.map(p => p.key),
               relType: vizItem.item.type
             }}
             graphStyle={graphStyle}
@@ -93,7 +125,7 @@ export function DefaultDetailsPane({
                 graphStyle={graphStyle}
                 selectedLabel={{
                   label,
-                  propertyKeys: vizItem.item.propertyList.map(p => p.key)
+                  propertyKeys: propertyList.map(p => p.key)
                 }}
               />
             )
@@ -106,6 +138,16 @@ export function DefaultDetailsPane({
           moreStep={DETAILS_PANE_STEP_SIZE}
           totalNumItems={allItemProperties.length}
           nodeInspectorWidth={nodeInspectorWidth}
+          editable={editable}
+          readOnlyKeys={['<id>', '<element-id>']}
+          onPropertiesChange={nextProperties => {
+            const nextPropertyList = nextProperties.filter(
+              property =>
+                property.key !== '<id>' && property.key !== '<element-id>'
+            )
+            setPropertyList(nextPropertyList)
+            onPropertyListChange?.(nextPropertyList)
+          }}
         />
       </PaneBody>
     </PaneWrapper>

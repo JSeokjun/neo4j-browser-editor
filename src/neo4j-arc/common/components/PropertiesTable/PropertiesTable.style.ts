@@ -69,9 +69,15 @@ export const KeyCell = styled.td`
 `
 
 export const CopyCell = styled.td`
-  padding: 2px 5px;
-  display: flex;
-  justify-content: flex-end;
+  padding: 2px 2px;
+  vertical-align: top;
+  width: 1%;
+  white-space: nowrap;
+
+  & > * {
+    display: inline-flex;
+    vertical-align: middle;
+  }
 `
 export const ValueCell = styled.td`
   padding: 2px;
@@ -88,4 +94,52 @@ export const StyledExpandValueButton = styled.button`
   outline: none;
   background-color: inherit;
   color: ${props => props.theme.link};
+`
+
+export const InlineEditInput = styled.input`
+  width: 100%;
+  border: none;
+  border-bottom: 1.5px solid ${props => props.theme.link};
+  background: transparent;
+  color: ${props => props.theme.primaryText};
+  font-size: 13px;
+  padding: 2px 2px;
+  outline: none;
+
+  &::placeholder {
+    color: ${props => props.theme.frameControlButtonTextColor};
+    opacity: 0.5;
+    font-style: italic;
+  }
+`
+
+export const InlineActionButton = styled.button`
+  border: 0;
+  background: transparent;
+  color: ${props => props.theme.frameControlButtonTextColor};
+  cursor: pointer;
+  padding: 2px 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+
+  &:hover {
+    opacity: 1;
+  }
+`
+
+export const ActionSpacer = styled.span`
+  display: inline-block;
+  width: 18px;
+`
+
+export const AddPropertyContainer = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 4px;
+  align-items: end;
+  margin-top: 6px;
+  padding: 4px 2px;
+  border-top: 1px solid ${props => props.theme.alteringTableRowBackground};
 `

@@ -31,5 +31,10 @@ export type {
 export { measureText } from './utils/textMeasurement'
 
 export { GraphVisualizer } from './GraphVisualizer/GraphVisualizer'
+export type {
+  GraphPropertyEditEvent,
+  GraphNodeLabelsEditEvent,
+  GraphSelectionEvent
+} from './GraphVisualizer/GraphVisualizer'
 export type { DetailsPaneProps } from './GraphVisualizer/DefaultPanelContent/DefaultDetailsPane'
 export type { OverviewPaneProps } from './GraphVisualizer/DefaultPanelContent/DefaultOverviewPane'

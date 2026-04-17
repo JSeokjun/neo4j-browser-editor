@@ -33,6 +33,10 @@ const builtInGuides: {
   { identifier: 'intro', description: 'Navigating Neo4j Browser' },
   { identifier: 'concepts', description: 'Property graph model concepts' },
   {
+    identifier: 'graph-editing',
+    description: 'Visual graph editing - nodes, relationships, properties'
+  },
+  {
     identifier: 'cypher',
     description: 'Cypher basics - create, match, delete'
   },

@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import {
@@ -26,7 +26,7 @@ import {
 } from './DefaultDetailsPane'
 import { VizItemProperty } from 'neo4j-arc/common'
 import { GraphStyleModel } from '../../models/GraphStyle'
-import { VizItem } from '../../types'
+import { NodeItem, RelationshipItem } from '../../types'
 
 describe('<DetailsPane />', () => {
   const mockGraphStyle = new GraphStyleModel()
@@ -52,7 +52,7 @@ describe('<DetailsPane />', () => {
     type = 'node',
     width = 200
   }: RenderComponentProps) => {
-    let mockVizItem: VizItem
+    let mockVizItem: NodeItem | RelationshipItem
     switch (type) {
       case 'node':
         mockVizItem = {
@@ -72,6 +72,8 @@ describe('<DetailsPane />', () => {
             id: 'abc',
             elementId: 'elementId',
             type: 'abc2',
+            startNodeId: 'node-a',
+            endNodeId: 'node-b',
             propertyList
           }
         }
@@ -125,5 +127,40 @@ describe('<DetailsPane />', () => {
     expect(
       screen.getByRole('button', { name: 'Show 3 more' })
     ).toBeInTheDocument()
+  })
+
+  test('should emit updated properties from inline edit in details pane', async () => {
+    const onPropertyListChange = jest.fn()
+    render(
+      <DefaultDetailsPane
+        graphStyle={mockGraphStyle}
+        vizItem={{
+          type: 'node',
+          item: {
+            id: 'abc',
+            elementId: 'elementId',
+            labels: ['Agent'],
+            propertyList: [{ key: 'name', type: 'string', value: 'neo' }]
+          }
+        }}
+        nodeInspectorWidth={400}
+        editable
+        onPropertyListChange={onPropertyListChange}
+      />
+    )
+
+    fireEvent.doubleClick(screen.getByText('name'))
+    fireEvent.change(screen.getByLabelText('Edit property key'), {
+      target: { value: 'display_name' }
+    })
+    fireEvent.keyDown(screen.getByLabelText('Edit property key'), {
+      key: 'Enter'
+    })
+
+    await waitFor(() => {
+      expect(onPropertyListChange).toHaveBeenCalledWith([
+        { key: 'display_name', type: 'string', value: 'neo' }
+      ])
+    })
   })
 })

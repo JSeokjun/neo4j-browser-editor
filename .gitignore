@@ -23,3 +23,19 @@ neo4j-enterprise-*/
 
 ./src/neo4j-arc/dist
 ./src/neo4j-arc/node_modules
+
+.claude/worktrees/
+.code-review-graph/
+templates/
+.claude/
+.manifest.json
+.mcp.json
+.upgrade.log
+CLAUDE.md
+init-agent-team.py
+NEW-PROJECT-PROCESS.md
+.backup/
+config.toml
+VERSION
+docs/
+project-profile.yaml

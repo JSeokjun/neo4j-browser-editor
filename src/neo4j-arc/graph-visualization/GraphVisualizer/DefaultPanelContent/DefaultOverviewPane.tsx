@@ -44,18 +44,24 @@ type PaneBodySectionHeaderProps = {
   title: string
   numOfElementsVisible: number
   totalNumOfElements: number
+  t?: (key: string, params?: Record<string, string | number>) => string
 }
 function PaneBodySectionHeader({
   title,
   numOfElementsVisible,
-  totalNumOfElements
+  totalNumOfElements,
+  t
 }: PaneBodySectionHeaderProps) {
+  const translate = t || ((key: string) => key)
   return (
     <PaneBodySectionHeaderWrapper>
       <PaneBodySectionTitle>{title}</PaneBodySectionTitle>
       {numOfElementsVisible < totalNumOfElements && (
         <PaneBodySectionSmallText>
-          {`(showing ${numOfElementsVisible} of ${totalNumOfElements})`}
+          {translate('overview.showing', {
+            visible: numOfElementsVisible,
+            total: totalNumOfElements
+          })}
         </PaneBodySectionSmallText>
       )}
     </PaneBodySectionHeaderWrapper>
@@ -69,6 +75,7 @@ export type OverviewPaneProps = {
   relationshipCount: number | null
   stats: GraphStats
   infoMessage: string | null
+  t?: (key: string, params?: Record<string, string | number>) => string
 }
 
 export const OVERVIEW_STEP_SIZE = 50
@@ -79,8 +86,10 @@ function DefaultOverviewPane({
   nodeCount,
   relationshipCount,
   stats,
-  infoMessage
+  infoMessage,
+  t: tProp
 }: OverviewPaneProps): JSX.Element {
+  const t = tProp || ((key: string) => key)
   const [maxLabelsCount, setMaxLabelsCount] = useState(OVERVIEW_STEP_SIZE)
   const [maxRelationshipsCount, setMaxRelationshipsCount] =
     useState(OVERVIEW_STEP_SIZE)
@@ -105,14 +114,15 @@ function DefaultOverviewPane({
 
   return (
     <PaneWrapper>
-      <PaneHeader>{'Overview'}</PaneHeader>
+      <PaneHeader>{t('overview.title')}</PaneHeader>
       <PaneBody>
         {labels && visibleLabelKeys.length !== 0 && (
           <div>
             <PaneBodySectionHeader
-              title={'Node labels'}
+              title={t('overview.nodeLabels')}
               numOfElementsVisible={visibleLabelKeys.length}
               totalNumOfElements={totalNumOfLabelTypes}
+              t={t}
             />
             <StyledLegendInlineList>
               {visibleLabelKeys.map((label: string) => (
@@ -139,9 +149,10 @@ function DefaultOverviewPane({
         {relTypes && visibleRelationshipKeys.length !== 0 && (
           <div>
             <PaneBodySectionHeader
-              title={'Relationship types'}
+              title={t('overview.relTypes')}
               numOfElementsVisible={visibleRelationshipKeys.length}
               totalNumOfElements={totalNumOfRelTypes}
+              t={t}
             />
             <StyledLegendInlineList>
               {visibleRelationshipKeys.map(relType => (
@@ -167,7 +178,7 @@ function DefaultOverviewPane({
         <div style={{ paddingBottom: '10px' }}>
           {hasTruncatedFields && (
             <>
-              <WarningMessage text={'Record fields have been truncated.'} />
+              <WarningMessage text={t('overview.truncatedFields')} />
               <br />
             </>
           )}
@@ -179,9 +190,10 @@ function DefaultOverviewPane({
           )}
           {nodeCount !== null &&
             relationshipCount !== null &&
-            `Displaying ${numberToUSLocale(
-              nodeCount
-            )} nodes, ${numberToUSLocale(relationshipCount)} relationships.`}
+            t('overview.displaying', {
+              nodes: numberToUSLocale(nodeCount) || '0',
+              rels: numberToUSLocale(relationshipCount) || '0'
+            })}
         </div>
       </PaneBody>
     </PaneWrapper>

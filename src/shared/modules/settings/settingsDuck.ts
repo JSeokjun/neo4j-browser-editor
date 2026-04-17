@@ -106,6 +106,7 @@ export type SettingsState = {
     | typeof LIGHT_THEME
     | typeof OUTLINE_THEME
     | typeof DARK_THEME
+  language: 'en' | 'ko'
   initCmd: string
   playImplicitInitCommands: boolean
   initialNodeDisplay: string | number
@@ -129,9 +130,13 @@ export type SettingsState = {
   useReadTransactions: boolean
 }
 
+export const getLanguage = (state: any): 'en' | 'ko' =>
+  state[NAME].language || initialState.language
+
 export const initialState: SettingsState = {
   maxHistory: 30,
   theme: AUTO_THEME,
+  language: 'en',
   initCmd: ':play start',
   playImplicitInitCommands: true,
   initialNodeDisplay: 300,

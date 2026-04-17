@@ -34,6 +34,8 @@ export type GraphInteraction =
   | 'NODE_EXPAND'
   | 'NODE_UNPINNED'
   | 'NODE_DISMISSED'
+  | 'NODE_RELATIONSHIP_CREATE_ACTIVATED'
+  | 'RELATIONSHIP_ENDPOINT_RECONNECT_REQUESTED'
 
 export type GraphInteractionCallBack = (
   event: GraphInteraction,
@@ -47,8 +49,10 @@ export class GraphEventHandlerModel {
   onGraphModelChange: (stats: GraphStats) => void
   onItemMouseOver: (item: VizItem) => void
   onItemSelected: (item: VizItem) => void
+  onMultiSelectionChanged: (items: VizItem[]) => void
   onGraphInteraction: GraphInteractionCallBack
   selectedItem: NodeModel | RelationshipModel | null
+  multiSelectedItems: Set<NodeModel | RelationshipModel> = new Set()
 
   constructor(
     graph: GraphModel,
@@ -57,7 +61,8 @@ export class GraphEventHandlerModel {
     onItemMouseOver: (item: VizItem) => void,
     onItemSelected: (item: VizItem) => void,
     onGraphModelChange: (stats: GraphStats) => void,
-    onGraphInteraction?: (event: GraphInteraction) => void
+    onGraphInteraction?: (event: GraphInteraction) => void,
+    onMultiSelectionChanged?: (items: VizItem[]) => void
   ) {
     this.graph = graph
     this.visualization = visualization
@@ -65,6 +70,7 @@ export class GraphEventHandlerModel {
     this.selectedItem = null
     this.onItemMouseOver = onItemMouseOver
     this.onItemSelected = onItemSelected
+    this.onMultiSelectionChanged = onMultiSelectionChanged ?? (() => undefined)
     this.onGraphInteraction = onGraphInteraction ?? (() => undefined)
 
     this.onGraphModelChange = onGraphModelChange
@@ -74,7 +80,91 @@ export class GraphEventHandlerModel {
     this.onGraphModelChange(getGraphStats(this.graph))
   }
 
+  private dismissNode(
+    node: NodeModel,
+    source: 'nodeClose' | 'nodeDelete'
+  ): void {
+    this.graph.removeConnectedRelationships(node)
+    this.graph.removeNode(node)
+    this.deselectItem()
+    this.visualization.update({
+      updateNodes: true,
+      updateRelationships: true,
+      restartSimulation: true
+    })
+    this.graphModelChanged()
+    this.onGraphInteraction('NODE_DISMISSED', {
+      nodeId: node.id,
+      elementId: node.elementId,
+      source
+    })
+  }
+
+  private itemToVizItem(item: NodeModel | RelationshipModel): VizItem {
+    if (item.isNode) {
+      const node = item as NodeModel
+      return { type: 'node', item: node }
+    }
+    const rel = item as RelationshipModel
+    return {
+      type: 'relationship',
+      item: {
+        ...rel,
+        startNodeId: rel.source.id,
+        endNodeId: rel.target.id
+      }
+    }
+  }
+
+  private notifyMultiSelection(): void {
+    const vizItems = Array.from(this.multiSelectedItems).map(item =>
+      this.itemToVizItem(item)
+    )
+    this.onMultiSelectionChanged(vizItems)
+  }
+
+  clearMultiSelection(): void {
+    this.multiSelectedItems.forEach(item => {
+      item.selected = false
+    })
+    this.multiSelectedItems.clear()
+    this.visualization.update({
+      updateNodes: true,
+      updateRelationships: true,
+      restartSimulation: false
+    })
+    this.notifyMultiSelection()
+  }
+
+  private toggleMultiSelect(item: NodeModel | RelationshipModel): void {
+    if (this.multiSelectedItems.has(item)) {
+      this.multiSelectedItems.delete(item)
+      item.selected = false
+    } else {
+      this.multiSelectedItems.add(item)
+      item.selected = true
+    }
+
+    // Also keep selectedItem pointing to the last toggled item for the inspector
+    if (this.multiSelectedItems.size > 0) {
+      this.selectedItem = item
+    } else {
+      this.selectedItem = null
+    }
+
+    this.visualization.update({
+      updateNodes: true,
+      updateRelationships: true,
+      restartSimulation: false
+    })
+    this.notifyMultiSelection()
+  }
+
   selectItem(item: NodeModel | RelationshipModel): void {
+    // Clear multi-selection when doing normal select
+    if (this.multiSelectedItems.size > 0) {
+      this.clearMultiSelection()
+    }
     if (this.selectedItem) {
       this.selectedItem.selected = false
     }
@@ -89,6 +179,9 @@ export class GraphEventHandlerModel {
   }
 
   deselectItem(): void {
+    if (this.multiSelectedItems.size > 0) {
+      this.clearMultiSelection()
+    }
     if (this.selectedItem) {
       this.selectedItem.selected = false
 
@@ -110,25 +203,38 @@ export class GraphEventHandlerModel {
   }
 
   nodeClose(d: NodeModel): void {
-    this.graph.removeConnectedRelationships(d)
-    this.graph.removeNode(d)
-    this.deselectItem()
-    this.visualization.update({
-      updateNodes: true,
-      updateRelationships: true,
-      restartSimulation: true
-    })
-    this.graphModelChanged()
-    this.onGraphInteraction('NODE_DISMISSED')
+    this.dismissNode(d, 'nodeClose')
   }
 
-  nodeClicked(node: NodeModel): void {
+  nodeDelete(d: NodeModel): void {
+    this.dismissNode(d, 'nodeDelete')
+  }
+
+  nodeCreateRelationship(node: NodeModel): void {
+    this.onGraphInteraction('NODE_RELATIONSHIP_CREATE_ACTIVATED', {
+      nodeId: node.id,
+      elementId: node.elementId
+    })
+  }
+
+  nodeClicked(node: NodeModel, properties?: Record<string, unknown>): void {
     if (!node) {
       return
     }
     node.hoverFixed = false
     node.fx = node.x
     node.fy = node.y
+
+    if (properties?.shiftKey) {
+      this.toggleMultiSelect(node)
+      // Also notify single item selected for the inspector panel
+      this.onItemSelected({
+        type: 'node',
+        item: node
+      })
+      return
+    }
+
     if (!node.selected) {
       this.selectItem(node)
       this.onItemSelected({
@@ -205,20 +311,62 @@ export class GraphEventHandlerModel {
   onRelationshipMouseOver(relationship: RelationshipModel): void {
     this.onItemMouseOver({
       type: 'relationship',
-      item: relationship
+      item: {
+        ...relationship,
+        startNodeId: relationship.source.id,
+        endNodeId: relationship.target.id
+      }
     })
   }
 
-  onRelationshipClicked(relationship: RelationshipModel): void {
+  onRelationshipClicked(
+    relationship: RelationshipModel,
+    properties?: Record<string, unknown>
+  ): void {
+    if (properties?.shiftKey) {
+      this.toggleMultiSelect(relationship)
+      this.onItemSelected({
+        type: 'relationship',
+        item: {
+          ...relationship,
+          startNodeId: relationship.source.id,
+          endNodeId: relationship.target.id
+        }
+      })
+      return
+    }
+
     if (!relationship.selected) {
       this.selectItem(relationship)
       this.onItemSelected({
         type: 'relationship',
-        item: relationship
+        item: {
+          ...relationship,
+          startNodeId: relationship.source.id,
+          endNodeId: relationship.target.id
+        }
       })
     } else {
       this.deselectItem()
     }
+  }
+
+  onRelationshipEndpointContextMenu(
+    relationship: RelationshipModel,
+    properties?: Record<string, unknown>
+  ): void {
+    const endpoint = properties?.endpoint
+    if (endpoint !== 'source' && endpoint !== 'target') {
+      return
+    }
+
+    this.onGraphInteraction('RELATIONSHIP_ENDPOINT_RECONNECT_REQUESTED', {
+      relationshipId: relationship.id,
+      relationshipElementId: relationship.elementId,
+      endpoint,
+      startNodeId: relationship.source.id,
+      endNodeId: relationship.target.id
+    })
   }
 
   onCanvasClicked(): void {
@@ -249,6 +397,12 @@ export class GraphEventHandlerModel {
       .on('nodeClicked', this.nodeClicked.bind(this))
       .on('nodeDblClicked', this.nodeDblClicked.bind(this))
       .on('nodeUnlock', this.nodeUnlock.bind(this))
+      .on('nodeDelete', this.nodeDelete.bind(this))
+      .on('nodeCreateRelationship', this.nodeCreateRelationship.bind(this))
+      .on(
+        'relationshipEndpointContextMenu',
+        this.onRelationshipEndpointContextMenu.bind(this)
+      )
     this.onItemMouseOut()
   }
 }

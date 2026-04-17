@@ -27,7 +27,7 @@ import icons from './d3Icons'
 
 const noOp = () => undefined
 
-const numberOfItemsInContextMenu = 3
+const numberOfItemsInContextMenu = 5
 
 const drawArc = function (radius: number, itemNumber: number, width = 30) {
   const startAngle =
@@ -84,9 +84,9 @@ const createMenuItem = function (
   eventType: string,
   itemIndex: number,
   className: string,
-  position: [number, number],
-  svgIconKey: 'Expand / Collapse' | 'Unlock' | 'Remove',
-  tooltip: string
+  svgIconKey: 'Expand / Collapse' | 'Unlock' | 'Remove' | 'Delete' | 'Create',
+  tooltip: string,
+  iconScale = 0.7
 ) {
   const tab = selection
     .selectAll(`path.${className}`)
@@ -114,15 +114,11 @@ const createMenuItem = function (
     .classed(className, true)
     .classed('context-menu-item', true)
     .attr('transform', (node: NodeModel) => {
-      return `translate(${Math.floor(
-        // @ts-expect-error
-        drawArc(node.radius, itemIndex).centroid()[0] +
-          (position[0] * 100) / 100
-      )},${Math.floor(
-        // @ts-expect-error
-        drawArc(node.radius, itemIndex).centroid()[1] +
-          (position[1] * 100) / 100
-      )}) scale(0.7)`
+      // @ts-expect-error
+      const [cx, cy] = drawArc(node.radius, itemIndex).centroid()
+      // Center the 24x24 icon at the arc centroid:
+      // translate to centroid, scale 0.7, then shift back by half viewBox
+      return `translate(${cx},${cy}) scale(${iconScale}) translate(-12,-12)`
     })
     .attr('color', (node: NodeModel) => {
       return viz.style.forNode(node).get('text-color-internal')
@@ -159,9 +155,44 @@ const donutRemoveNode = new Renderer<NodeModel>({
       'nodeClose',
       1,
       'remove-node',
-      [-8, 0],
       'Remove',
       'Dismiss'
+    )
+  },
+
+  onTick: noOp
+})
+
+const donutDeleteNode = new Renderer<NodeModel>({
+  name: 'donutDeleteNode',
+  onGraphChange(selection, viz) {
+    return createMenuItem(
+      selection,
+      viz,
+      'nodeDelete',
+      4,
+      'delete-node',
+      'Delete',
+      'Delete the node',
+      0.85
+    )
+  },
+
+  onTick: noOp
+})
+
+const donutCreateRelationship = new Renderer<NodeModel>({
+  name: 'donutCreateRelationship',
+  onGraphChange(selection, viz) {
+    return createMenuItem(
+      selection,
+      viz,
+      'nodeCreateRelationship',
+      5,
+      'create-relationship',
+      'Create',
+      'Create relationship from this node',
+      1.0
     )
   },
 
@@ -177,7 +208,6 @@ const donutExpandNode = new Renderer<NodeModel>({
       'nodeDblClicked',
       2,
       'expand-node',
-      [-8, -10],
       'Expand / Collapse',
       'Expand / Collapse child relationships'
     )
@@ -195,7 +225,6 @@ const donutUnlockNode = new Renderer<NodeModel>({
       'nodeUnlock',
       3,
       'unlock-node',
-      [-10, -6],
       'Unlock',
       'Unlock the node to re-layout the graph'
     )
@@ -207,5 +236,7 @@ const donutUnlockNode = new Renderer<NodeModel>({
 export const nodeMenuRenderer = [
   donutExpandNode,
   donutRemoveNode,
-  donutUnlockNode
+  donutUnlockNode,
+  donutDeleteNode,
+  donutCreateRelationship
 ]

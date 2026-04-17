@@ -103,6 +103,7 @@ import guideCypher from './sidebar-guides/cypher'
 import guideIntro from './sidebar-guides/intro'
 import guideMovieGraph from './sidebar-guides/movie-graph'
 import guideNorthwindGraph from './sidebar-guides/northwind-graph'
+import guideGraphEditing from './sidebar-guides/graph-editing'
 import guideUnfound from './sidebar-guides/unfound'
 
 type AllDocumentation = {
@@ -137,6 +138,8 @@ type GuideDocs = {
 export type BuiltInGuideIdentifier =
   | 'concepts'
   | 'cypher'
+  | 'graph-editing'
+  | 'graphEditing'
   | 'intro'
   | 'movie-graph'
   | 'movieGraph'
@@ -358,6 +361,8 @@ const docs: AllDocumentation = {
     chapters: {
       concepts: guideConcepts,
       cypher: guideCypher,
+      'graph-editing': guideGraphEditing,
+      graphEditing: guideGraphEditing,
       intro: guideIntro,
       movies: guideMovieGraph,
       movieGraph: guideMovieGraph,

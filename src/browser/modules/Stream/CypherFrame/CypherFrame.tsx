@@ -27,6 +27,7 @@ import { Dispatch } from 'redux'
 import {
   AlertIcon,
   AsciiIcon,
+  ChangesIcon,
   CodeIcon,
   ErrorIcon,
   PlanIcon,
@@ -108,6 +109,7 @@ type CypherFrameState = {
   asciiMaxColWidth?: number
   asciiSetColWidth?: string
   planExpand: PlanExpand
+  pendingChangesCount: number
 }
 export type PlanExpand = 'EXPAND' | 'COLLAPSE'
 
@@ -122,7 +124,8 @@ export class CypherFrame extends Component<CypherFrameProps, CypherFrameState> {
     hasVis: false,
     asciiMaxColWidth: undefined,
     asciiSetColWidth: undefined,
-    planExpand: 'EXPAND'
+    planExpand: 'EXPAND',
+    pendingChangesCount: 0
   }
 
   changeView(view: ViewTypes.FrameView): void {
@@ -144,7 +147,8 @@ export class CypherFrame extends Component<CypherFrameProps, CypherFrameState> {
       this.state.asciiMaxColWidth !== state.asciiMaxColWidth ||
       this.state.asciiSetColWidth !== state.asciiSetColWidth ||
       this.state.planExpand !== state.planExpand ||
-      this.state.hasVis !== state.hasVis
+      this.state.hasVis !== state.hasVis ||
+      this.state.pendingChangesCount !== state.pendingChangesCount
     )
   }
 
@@ -165,7 +169,9 @@ export class CypherFrame extends Component<CypherFrameProps, CypherFrameState> {
 
     // When frame re-use leads to result without visualization
     const doneLoading = this.props.request.status === REQUEST_STATUS_SUCCESS
-    const currentlyShowingViz = this.state.openView === ViewTypes.VISUALIZATION
+    const currentlyShowingViz =
+      this.state.openView === ViewTypes.VISUALIZATION ||
+      this.state.openView === ViewTypes.CHANGES
     if (doneLoading && currentlyShowingViz && !this.canShowViz()) {
       const view = initialView(this.props, {
         ...this.state,
@@ -234,6 +240,39 @@ export class CypherFrame extends Component<CypherFrameProps, CypherFrameState> {
           <VisualizationIcon />
         </CypherFrameButton>
       )}
+      {this.canShowViz() && (
+        <CypherFrameButton
+          data-testid="cypherFrameSidebarChanges"
+          selected={this.state.openView === ViewTypes.CHANGES}
+          onClick={() => {
+            this.changeView(ViewTypes.CHANGES)
+          }}
+          style={{ position: 'relative' as const }}
+        >
+          <ChangesIcon />
+          {this.state.pendingChangesCount > 0 && (
+            <span
+              style={{
+                position: 'absolute',
+                top: 4,
+                right: 2,
+                minWidth: 14,
+                height: 14,
+                borderRadius: 7,
+                background: '#df4d3b',
+                color: '#fff',
+                fontSize: 9,
+                lineHeight: '14px',
+                textAlign: 'center',
+                padding: '0 3px',
+                fontWeight: 600
+              }}
+            >
+              {this.state.pendingChangesCount}
+            </span>
+          )}
+        </CypherFrameButton>
+      )}
       {!resultIsError(this.props.request) && (
         <CypherFrameButton
           data-testid="cypherFrameSidebarTable"
@@ -245,17 +284,18 @@ export class CypherFrame extends Component<CypherFrameProps, CypherFrameState> {
           <TableIcon />
         </CypherFrameButton>
       )}
-      {resultHasRows(this.props.request) && !resultIsError(this.props.request) && (
-        <CypherFrameButton
-          data-testid="cypherFrameSidebarAscii"
-          selected={this.state.openView === ViewTypes.TEXT}
-          onClick={() => {
-            this.changeView(ViewTypes.TEXT)
-          }}
-        >
-          <AsciiIcon />
-        </CypherFrameButton>
-      )}
+      {resultHasRows(this.props.request) &&
+        !resultIsError(this.props.request) && (
+          <CypherFrameButton
+            data-testid="cypherFrameSidebarAscii"
+            selected={this.state.openView === ViewTypes.TEXT}
+            onClick={() => {
+              this.changeView(ViewTypes.TEXT)
+            }}
+          >
+            <AsciiIcon />
+          </CypherFrameButton>
+        )}
       {resultHasPlan(this.props.request) && (
         <CypherFrameButton
           data-testid="cypherFrameSidebarPlan"
@@ -318,7 +358,10 @@ export class CypherFrame extends Component<CypherFrameProps, CypherFrameState> {
         data-testid="frame-loaded-contents"
         isFullscreen={this.props.isFullscreen}
         isCollapsed={this.props.isCollapsed}
-        preventOverflow={this.state.openView === ViewTypes.VISUALIZATION}
+        preventOverflow={
+          this.state.openView === ViewTypes.VISUALIZATION ||
+          this.state.openView === ViewTypes.CHANGES
+        }
         removePadding
       >
         <Display if={this.state.openView === ViewTypes.TEXT} lazy>
@@ -359,9 +402,16 @@ export class CypherFrame extends Component<CypherFrameProps, CypherFrameState> {
             }
           />
         </Display>
-        <Display if={this.state.openView === ViewTypes.VISUALIZATION} lazy>
+        <Display
+          if={
+            this.state.openView === ViewTypes.VISUALIZATION ||
+            this.state.openView === ViewTypes.CHANGES
+          }
+          lazy
+        >
           <VisualizationConnectedBus
             isFullscreen={this.props.isFullscreen}
+            query={query}
             result={result}
             updated={this.props.request.updated}
             assignVisElement={(svgElement: any, graphElement: any) => {
@@ -371,6 +421,12 @@ export class CypherFrame extends Component<CypherFrameProps, CypherFrameState> {
             initialNodeDisplay={this.props.initialNodeDisplay}
             autoComplete={this.props.autoComplete}
             maxNeighbours={this.props.maxNeighbours}
+            showChangesPanel={this.state.openView === ViewTypes.CHANGES}
+            onPendingCountChange={(count: number) => {
+              if (this.state.pendingChangesCount !== count) {
+                this.setState({ pendingChangesCount: count })
+              }
+            }}
           />
         </Display>
       </StyledFrameBody>
@@ -500,6 +556,7 @@ export class CypherFrame extends Component<CypherFrameProps, CypherFrameState> {
       )
     const statusBar =
       this.state.openView !== ViewTypes.VISUALIZATION &&
+      this.state.openView !== ViewTypes.CHANGES &&
       requestStatus !== 'error'
         ? this.getStatusbar(result)
         : null

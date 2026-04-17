@@ -32,6 +32,7 @@ import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { Provider } from 'react-redux'
 import { BusProvider } from 'react-suber'
+import { I18nProvider } from 'shared/i18n'
 import {
   AnyAction,
   StoreEnhancer,
@@ -281,7 +282,9 @@ const AppInit = (): JSX.Element => {
       <BusProvider bus={bus}>
         <ApolloProvider client={client}>
           <DndProvider backend={HTML5Backend}>
-            <App />
+            <I18nProvider>
+              <App />
+            </I18nProvider>
           </DndProvider>
         </ApolloProvider>
       </BusProvider>

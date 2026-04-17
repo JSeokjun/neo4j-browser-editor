@@ -28,6 +28,7 @@ import {
   BasicNode,
   BasicNodesAndRels,
   BasicRelationship,
+  VizItemProperty,
   deepEquals
 } from 'neo4j-arc/common'
 import { DetailsPaneProps } from './DefaultPanelContent/DefaultDetailsPane'
@@ -39,6 +40,31 @@ import { GraphModel } from '../models/Graph'
 import { GraphInteractionCallBack } from './Graph/GraphEventHandlerModel'
 
 const DEFAULT_MAX_NEIGHBOURS = 100
+
+export type GraphPropertyEditEvent = {
+  itemType: 'node' | 'relationship'
+  id: string
+  elementId: string
+  propertyList: VizItemProperty[]
+}
+
+export type GraphNodeLabelsEditEvent = {
+  itemType: 'node'
+  id: string
+  elementId: string
+  labels: string[]
+  originalLabels: string[]
+}
+
+export type GraphSelectionEvent =
+  | {
+      itemType: 'node' | 'relationship'
+      id: string
+      elementId: string
+    }
+  | {
+      itemType: 'canvas' | 'status-item'
+    }
 
 type GraphVisualizerDefaultProps = {
   maxNeighbours: number
@@ -56,6 +82,7 @@ type GraphVisualizerDefaultProps = {
   initialZoomToFit?: boolean
   disableWheelZoomInfoMessage: () => void
   useGeneratedDefaultColors: boolean
+  detailsPaneEditable: boolean
 }
 type GraphVisualizerProps = GraphVisualizerDefaultProps & {
   relationships: BasicRelationship[]
@@ -85,6 +112,31 @@ type GraphVisualizerProps = GraphVisualizerDefaultProps & {
   onGraphInteraction?: GraphInteractionCallBack
   useGeneratedDefaultColors?: boolean
   autocompleteRelationships: boolean
+  onPropertyEdit?: (event: GraphPropertyEditEvent) => void
+  onNodeLabelsEdit?: (event: GraphNodeLabelsEditEvent) => void
+  onCreateRelationshipFromNode?: (
+    sourceNodeId: string,
+    targetNodeId: string,
+    type: string
+  ) => void
+  onDeleteRelationship?: (relationshipElementId: string) => void
+  onReverseRelationship?: (relationshipElementId: string) => void
+  onReconnectRelationship?: (
+    relationshipElementId: string,
+    startNodeId: string,
+    endNodeId: string
+  ) => void
+  onRelationshipTypeChange?: (
+    relationshipElementId: string,
+    newType: string
+  ) => void
+  onBatchDelete?: (items: VizItem[]) => void
+  onValidationWarning?: (message: string) => void
+  t?: (key: string, params?: Record<string, string | number>) => string
+  onSelectionChange?: (event: GraphSelectionEvent) => void
+  selectedNodeElementId?: string
+  selectedRelationshipElementId?: string
+  initialNodePositions?: Record<string, { x: number; y: number }>
 }
 
 type GraphVisualizerState = {
@@ -93,6 +145,7 @@ type GraphVisualizerState = {
   nodes: BasicNode[]
   relationships: BasicRelationship[]
   selectedItem: VizItem
+  multiSelectedItems: VizItem[]
   stats: GraphStats
   styleVersion: number
   freezeLegend: boolean
@@ -106,6 +159,57 @@ export class GraphVisualizer extends Component<
 > {
   defaultStyle: any
 
+  private asNodeSelectionItem(node: BasicNode): VizItem {
+    return {
+      type: 'node',
+      item: {
+        id: node.id,
+        elementId: node.elementId,
+        labels: node.labels,
+        propertyList: Object.entries(node.properties).map(([key, value]) => ({
+          key,
+          value,
+          type: node.propertyTypes[key] || 'string'
+        }))
+      }
+    }
+  }
+
+  private asCanvasSelectionItem(
+    nodes: BasicNode[],
+    relationships: BasicRelationship[]
+  ): VizItem {
+    return {
+      type: 'canvas',
+      item: {
+        nodeCount: nodes.length,
+        relationshipCount: relationships.length
+      }
+    }
+  }
+
+  private asRelationshipSelectionItem(
+    relationship: BasicRelationship
+  ): VizItem {
+    return {
+      type: 'relationship',
+      item: {
+        id: relationship.id,
+        elementId: relationship.elementId,
+        type: relationship.type,
+        startNodeId: relationship.startNodeId,
+        endNodeId: relationship.endNodeId,
+        propertyList: Object.entries(relationship.properties).map(
+          ([key, value]) => ({
+            key,
+            value,
+            type: relationship.propertyTypes[key] || 'string'
+          })
+        )
+      }
+    }
+  }
+
   static defaultProps: GraphVisualizerDefaultProps = {
     maxNeighbours: DEFAULT_MAX_NEIGHBOURS,
     updateStyle: () => undefined,
@@ -118,7 +222,145 @@ export class GraphVisualizer extends Component<
     setNodePropertiesExpandedByDefault: () => undefined,
     wheelZoomInfoMessageEnabled: false,
     disableWheelZoomInfoMessage: () => undefined,
-    useGeneratedDefaultColors: true
+    useGeneratedDefaultColors: true,
+    detailsPaneEditable: true
+  }
+
+  private handlePropertyListChange(
+    vizItem: VizItem,
+    propertyList: VizItemProperty[]
+  ): void {
+    if (vizItem.type === 'node') {
+      const propertyTypes = propertyList.reduce(
+        (acc, property) => ({ ...acc, [property.key]: property.type }),
+        {} as Record<string, string>
+      )
+      const properties = propertyList.reduce(
+        (acc, property) => ({ ...acc, [property.key]: property.value }),
+        {} as Record<string, string>
+      )
+
+      const nextNodes = this.state.nodes.map(node =>
+        node.id === vizItem.item.id
+          ? { ...node, properties, propertyTypes }
+          : node
+      )
+
+      const nextSelectedItem: VizItem = {
+        ...vizItem,
+        item: {
+          ...vizItem.item,
+          propertyList
+        }
+      }
+
+      this.setState({
+        nodes: nextNodes,
+        selectedItem: nextSelectedItem
+      })
+      this.props.onPropertyEdit?.({
+        itemType: 'node',
+        id: vizItem.item.id,
+        elementId: vizItem.item.elementId,
+        propertyList
+      })
+      return
+    }
+
+    if (vizItem.type === 'relationship') {
+      const propertyTypes = propertyList.reduce(
+        (acc, property) => ({ ...acc, [property.key]: property.type }),
+        {} as Record<string, string>
+      )
+      const properties = propertyList.reduce(
+        (acc, property) => ({ ...acc, [property.key]: property.value }),
+        {} as Record<string, string>
+      )
+
+      const nextRelationships = this.state.relationships.map(relationship =>
+        relationship.id === vizItem.item.id
+          ? { ...relationship, properties, propertyTypes }
+          : relationship
+      )
+
+      const nextSelectedItem: VizItem = {
+        ...vizItem,
+        item: {
+          ...vizItem.item,
+          propertyList
+        }
+      }
+
+      this.setState({
+        relationships: nextRelationships,
+        selectedItem: nextSelectedItem
+      })
+      this.props.onPropertyEdit?.({
+        itemType: 'relationship',
+        id: vizItem.item.id,
+        elementId: vizItem.item.elementId,
+        propertyList
+      })
+    }
+  }
+
+  private handleNodeLabelsChange(vizItem: VizItem, labels: string[]): void {
+    if (vizItem.type !== 'node') {
+      return
+    }
+
+    const nextNodes = this.state.nodes.map(node =>
+      node.id === vizItem.item.id ? { ...node, labels } : node
+    )
+
+    const nextSelectedItem: VizItem = {
+      ...vizItem,
+      item: {
+        ...vizItem.item,
+        labels
+      }
+    }
+
+    this.setState({
+      nodes: nextNodes,
+      selectedItem: nextSelectedItem
+    })
+
+    this.props.onNodeLabelsEdit?.({
+      itemType: 'node',
+      id: vizItem.item.id,
+      elementId: vizItem.item.elementId,
+      labels,
+      originalLabels: vizItem.item.labels
+    })
+  }
+
+  private handleRelationshipTypeChange(
+    vizItem: VizItem,
+    newType: string
+  ): void {
+    if (vizItem.type !== 'relationship') {
+      return
+    }
+
+    const nextRelationships = this.state.relationships.map(rel =>
+      rel.id === vizItem.item.id ? { ...rel, type: newType } : rel
+    )
+
+    const nextSelectedItem: VizItem = {
+      ...vizItem,
+      item: {
+        ...vizItem.item,
+        type: newType
+      }
+    }
+
+    this.setState({
+      relationships: nextRelationships,
+      selectedItem: nextSelectedItem
+    })
+
+    this.props.onRelationshipTypeChange?.(vizItem.item.elementId, newType)
   }
 
   constructor(props: GraphVisualizerProps) {
@@ -132,18 +374,27 @@ export class GraphVisualizer extends Component<
       nodePropertiesExpandedByDefault
     } = this.props
 
-    const selectedItem: VizItem = nodeLimitHit
-      ? {
-          type: 'status-item',
-          item: `Not all return nodes are being displayed due to Initial Node Display setting. Only first ${this.props.nodes.length} nodes are displayed.`
-        }
-      : {
-          type: 'canvas',
-          item: {
-            nodeCount: nodes.length,
-            relationshipCount: relationships.length
-          }
-        }
+    const selectedRelationship = this.props.selectedRelationshipElementId
+      ? relationships.find(
+          relationship =>
+            relationship.elementId === this.props.selectedRelationshipElementId
+        )
+      : undefined
+
+    const selectedNode = this.props.selectedNodeElementId
+      ? nodes.find(node => node.elementId === this.props.selectedNodeElementId)
+      : undefined
+
+    const selectedItem: VizItem = selectedRelationship
+      ? this.asRelationshipSelectionItem(selectedRelationship)
+      : selectedNode
+        ? this.asNodeSelectionItem(selectedNode)
+        : nodeLimitHit
+          ? {
+              type: 'status-item',
+              item: `Not all return nodes are being displayed due to Initial Node Display setting. Only first ${this.props.nodes.length} nodes are displayed.`
+            }
+          : this.asCanvasSelectionItem(nodes, relationships)
 
     if (this.props.graphStyleData) {
       const rebasedStyle = deepmerge(
@@ -162,6 +413,7 @@ export class GraphVisualizer extends Component<
       nodes,
       relationships,
       selectedItem,
+      multiSelectedItems: [],
       hoveredItem: selectedItem,
       freezeLegend: false,
       width: defaultPanelWidth(),
@@ -210,6 +462,18 @@ export class GraphVisualizer extends Component<
 
   onItemSelect(selectedItem: VizItem): void {
     this.setState({ selectedItem })
+    if (selectedItem.type === 'node' || selectedItem.type === 'relationship') {
+      this.props.onSelectionChange?.({
+        itemType: selectedItem.type,
+        id: selectedItem.item.id,
+        elementId: selectedItem.item.elementId
+      })
+      return
+    }
+
+    if (selectedItem.type === 'canvas' || selectedItem.type === 'status-item') {
+      this.props.onSelectionChange?.({ itemType: selectedItem.type })
+    }
   }
 
   onGraphModelChange(stats: GraphStats): void {
@@ -241,6 +505,50 @@ export class GraphVisualizer extends Component<
           }
         )
       }
+    }
+
+    if (
+      prevProps.selectedRelationshipElementId !==
+        this.props.selectedRelationshipElementId &&
+      this.props.selectedRelationshipElementId
+    ) {
+      const selectedRelationship = this.state.relationships.find(
+        relationship =>
+          relationship.elementId === this.props.selectedRelationshipElementId
+      )
+
+      if (selectedRelationship) {
+        this.setState({
+          selectedItem: this.asRelationshipSelectionItem(selectedRelationship)
+        })
+      }
+      return
+    }
+
+    if (
+      prevProps.selectedNodeElementId !== this.props.selectedNodeElementId &&
+      this.props.selectedNodeElementId
+    ) {
+      const selectedNode = this.state.nodes.find(
+        node => node.elementId === this.props.selectedNodeElementId
+      )
+
+      if (selectedNode) {
+        this.setState({ selectedItem: this.asNodeSelectionItem(selectedNode) })
+      }
+      return
+    }
+
+    if (
+      prevProps.selectedNodeElementId !== this.props.selectedNodeElementId &&
+      !this.props.selectedNodeElementId
+    ) {
+      this.setState({
+        selectedItem: this.asCanvasSelectionItem(
+          this.state.nodes,
+          this.state.relationships
+        )
+      })
     }
   }
 
@@ -276,6 +584,10 @@ export class GraphVisualizer extends Component<
           disableWheelZoomInfoMessage={this.props.disableWheelZoomInfoMessage}
           initialZoomToFit={this.props.initialZoomToFit}
           onGraphInteraction={this.props.onGraphInteraction}
+          onMultiSelectionChanged={(items: VizItem[]) =>
+            this.setState({ multiSelectedItems: items })
+          }
+          initialNodePositions={this.props.initialNodePositions}
         />
         <NodeInspectorPanel
           graphStyle={graphStyle}
@@ -295,6 +607,28 @@ export class GraphVisualizer extends Component<
             )
             this.setState({ nodePropertiesExpanded: !nodePropertiesExpanded })
           }}
+          detailsPaneEditable={this.props.detailsPaneEditable}
+          onPropertyListChange={this.handlePropertyListChange.bind(this)}
+          onNodeLabelsChange={this.handleNodeLabelsChange.bind(this)}
+          onCreateRelationshipFromNode={this.props.onCreateRelationshipFromNode}
+          onDeleteRelationship={this.props.onDeleteRelationship}
+          onReverseRelationship={this.props.onReverseRelationship}
+          onReconnectRelationship={this.props.onReconnectRelationship}
+          onRelationshipTypeChange={(elementId, newType) => {
+            const vizItem = this.state.selectedItem
+            if (
+              vizItem.type === 'relationship' &&
+              vizItem.item.elementId === elementId
+            ) {
+              this.handleRelationshipTypeChange(vizItem, newType)
+            }
+          }}
+          multiSelectedItems={this.state.multiSelectedItems}
+          onBatchDelete={() =>
+            this.props.onBatchDelete?.(this.state.multiSelectedItems)
+          }
+          onValidationWarning={this.props.onValidationWarning}
+          t={this.props.t}
           DetailsPaneOverride={this.props.DetailsPaneOverride}
           OverviewPaneOverride={this.props.OverviewPaneOverride}
         />

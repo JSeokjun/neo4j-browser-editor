@@ -177,6 +177,130 @@ export const PaneTitle = styled.div`
   align-items: center;
 `
 
+export const RelTypeLine = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`
+
+export const RelTypeActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+`
+
+export const PaneTitleDeleteButton = styled.button`
+  border: 0;
+  background: transparent;
+  color: ${props => props.theme.frameControlButtonTextColor};
+  cursor: pointer;
+  margin-left: auto;
+  padding: 2px 4px;
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 1;
+    color: ${props => props.theme.error};
+  }
+`
+
+export const StyledNodeLabelsEditor = styled.input`
+  width: 100%;
+  margin-top: 8px;
+  padding: 4px 0;
+  background: transparent;
+  color: ${props => props.theme.primaryText};
+  border: none;
+  border-bottom: 1.5px solid ${props => props.theme.link};
+  border-radius: 0;
+  outline: none;
+  font-size: 13px;
+
+  &::placeholder {
+    color: ${props => props.theme.frameControlButtonTextColor};
+    opacity: 0.5;
+    font-style: italic;
+  }
+`
+
+export const StyledInlineActionRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+`
+
+export const StyledInlineActionInput = styled.input`
+  min-width: 110px;
+  padding: 4px 0;
+  background: transparent;
+  color: ${props => props.theme.primaryText};
+  border: none;
+  border-bottom: 1.5px solid ${props => props.theme.link};
+  border-radius: 0;
+  outline: none;
+  font-size: 13px;
+`
+
+export const StyledInlineActionButton = styled.button`
+  margin-top: 8px;
+  padding: 5px 10px;
+  background: transparent;
+  color: ${props => props.theme.error};
+  border: 1px solid ${props => props.theme.error};
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0.8;
+
+  &:hover {
+    opacity: 1;
+    background: ${props => props.theme.error};
+    color: ${props => props.theme.editorBackground};
+  }
+`
+
+export const StyledRelTypeEditor = styled.input`
+  padding: 3px 6px;
+  background: transparent;
+  color: ${props => props.theme.primaryText};
+  border: none;
+  border-bottom: 1.5px solid ${props => props.theme.link};
+  border-radius: 0;
+  outline: none;
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 60px;
+  max-width: 140px;
+
+  &::placeholder {
+    color: ${props => props.theme.frameControlButtonTextColor};
+    opacity: 0.5;
+    font-style: italic;
+  }
+`
+
+export const PaneTitleActionButton = styled.button`
+  border: 0;
+  background: transparent;
+  color: ${props => props.theme.frameControlButtonTextColor};
+  cursor: pointer;
+  padding: 2px 4px;
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.5;
+  font-size: 14px;
+  font-weight: bold;
+
+  &:hover {
+    opacity: 1;
+    color: ${props => props.theme.link};
+  }
+`
+
 export const PaneBodySectionTitle = styled.span`
   font-weight: 700;
 `

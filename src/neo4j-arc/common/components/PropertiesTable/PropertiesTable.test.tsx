@@ -17,10 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
-
-import { VizItem } from 'neo4j-arc/graph-visualization'
 
 import {
   PropertiesTable,
@@ -34,40 +32,12 @@ import { VizItemProperty } from 'neo4j-arc/common'
 describe('<DetailsPane />', () => {
   type RenderComponentProps = {
     propertyList?: VizItemProperty[]
-    labels?: string[]
-    type?: 'node' | 'relationship'
     width?: number
   }
   const renderComponent = ({
     propertyList = [],
-    labels = [],
-    type = 'node',
     width = 200
   }: RenderComponentProps) => {
-    let mockVizItem: VizItem
-    switch (type) {
-      case 'node':
-        mockVizItem = {
-          type: type,
-          item: {
-            id: 'abc',
-            elementId: 'abc',
-            labels,
-            propertyList
-          }
-        }
-        break
-      case 'relationship':
-        mockVizItem = {
-          type: type,
-          item: {
-            id: 'abc',
-            elementId: 'abc',
-            type: 'abc2',
-            propertyList
-          }
-        }
-    }
     return render(
       <PropertiesTable
         visibleProperties={propertyList}
@@ -131,5 +101,100 @@ describe('<DetailsPane />', () => {
     await waitFor(() =>
       expect(screen.getByText(expectedCutValue)).toBeInTheDocument()
     )
+  })
+
+  test('should support inline editing of key and value on double click', async () => {
+    const onPropertiesChange = jest.fn()
+    render(
+      <PropertiesTable
+        visibleProperties={[{ key: 'name', type: 'string', value: 'neo' }]}
+        onMoreClick={jest.fn()}
+        totalNumItems={1}
+        moreStep={1000}
+        nodeInspectorWidth={400}
+        editable
+        onPropertiesChange={onPropertiesChange}
+      />
+    )
+
+    fireEvent.doubleClick(screen.getByText('name'))
+    const keyInput = screen.getByLabelText('Edit property key')
+    fireEvent.change(keyInput, { target: { value: 'display_name' } })
+    fireEvent.keyDown(keyInput, { key: 'Enter' })
+
+    await waitFor(() => {
+      expect(onPropertiesChange).toHaveBeenCalledWith([
+        { key: 'display_name', type: 'string', value: 'neo' }
+      ])
+    })
+
+    fireEvent.doubleClick(screen.getByText('neo'))
+    const valueInput = screen.getByLabelText('Edit property value')
+    fireEvent.change(valueInput, { target: { value: 'neo4j' } })
+    fireEvent.keyDown(valueInput, { key: 'Enter' })
+
+    await waitFor(() => {
+      expect(onPropertiesChange).toHaveBeenLastCalledWith([
+        { key: 'display_name', type: 'string', value: 'neo4j' }
+      ])
+    })
+  })
+
+  test('should not allow inline editing for readonly keys', () => {
+    const onPropertiesChange = jest.fn()
+    render(
+      <PropertiesTable
+        visibleProperties={[{ key: '<id>', type: 'string', value: '12' }]}
+        onMoreClick={jest.fn()}
+        totalNumItems={1}
+        moreStep={1000}
+        nodeInspectorWidth={400}
+        editable
+        readOnlyKeys={['<id>', '<element-id>']}
+        onPropertiesChange={onPropertiesChange}
+      />
+    )
+
+    fireEvent.doubleClick(screen.getByText('<id>'))
+    expect(screen.queryByLabelText('Edit property key')).not.toBeInTheDocument()
+    expect(onPropertiesChange).not.toHaveBeenCalled()
+  })
+
+  test('should support adding and removing properties in editable mode', async () => {
+    const onPropertiesChange = jest.fn()
+    render(
+      <PropertiesTable
+        visibleProperties={[{ key: 'name', type: 'string', value: 'neo' }]}
+        onMoreClick={jest.fn()}
+        totalNumItems={1}
+        moreStep={1000}
+        nodeInspectorWidth={400}
+        editable
+        onPropertiesChange={onPropertiesChange}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add property' }))
+    fireEvent.change(screen.getByLabelText('New property key'), {
+      target: { value: 'age' }
+    })
+    fireEvent.change(screen.getByLabelText('New property value'), {
+      target: { value: '5' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add property' }))
+
+    await waitFor(() => {
+      expect(onPropertiesChange).toHaveBeenCalledWith([
+        { key: 'name', type: 'string', value: 'neo' },
+        { key: 'age', type: 'string', value: '5' }
+      ])
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove property age' }))
+    await waitFor(() => {
+      expect(onPropertiesChange).toHaveBeenLastCalledWith([
+        { key: 'name', type: 'string', value: 'neo' }
+      ])
+    })
   })
 })

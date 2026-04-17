@@ -6,7 +6,11 @@ import {
   MagnifyingGlassMinusIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/solid'
-import { DocumentDuplicateIcon } from '@heroicons/react/24/outline'
+import {
+  DocumentDuplicateIcon,
+  PlusCircleIcon,
+  TrashIcon as TrashOutlineIcon
+} from '@heroicons/react/24/outline'
 import React from 'react'
 
 const SMALL_SIZE = 15
@@ -25,6 +29,14 @@ export const ChevronLeftIcon = (): JSX.Element => <ChevronLeftIconSolid />
 type WidthProps = { width?: number }
 export const CopyIcon = ({ width = SMALL_SIZE }: WidthProps): JSX.Element => (
   <DocumentDuplicateIcon width={width} height={width} />
+)
+
+export const PlusIcon = ({ width = SMALL_SIZE }: WidthProps): JSX.Element => (
+  <PlusCircleIcon width={width} height={width} />
+)
+
+export const TrashIcon = ({ width = SMALL_SIZE }: WidthProps): JSX.Element => (
+  <TrashOutlineIcon width={width} height={width} />
 )
 
 export const InfoIcon = ({ size }: IconBaseProps): JSX.Element => {

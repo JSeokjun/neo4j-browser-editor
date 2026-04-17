@@ -18,63 +18,64 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import React from 'react'
+import { useT } from 'shared/i18n'
 
 import { BuiltInGuideSidebarSlide } from '../../modules/Carousel/Slide'
 import ManualLink from 'browser-components/ManualLink'
 import { DrawerExternalLink } from 'browser-components/drawer/drawer-styled'
 
-const title = 'Movie Graph Guide'
-const category = 'graphExamples'
-const identifier = 'movie-graph'
-const slides = [
-  <BuiltInGuideSidebarSlide key="s1">
-    <p>
-      <em>The Movie Graph</em> is a mini graph application, containing actors
-      and directors that are related through the movies they have collaborated
-      on.
-    </p>
-    <p>This guide shows how to:</p>
-    <ol className="big ">
-      <li>
-        <b>Load:</b> Insert movie data into the graph.
-      </li>
-      <li>
-        <b>Constrain:</b> Create unique node property constraints.
-      </li>
-      <li>
-        <b>Index:</b> Index nodes based on their labels.
-      </li>
-      <li>
-        <b>Find:</b> Retrieve individual movies and actors.
-      </li>
-      <li>
-        <b>Query:</b> Discover related actors and directors.
-      </li>
-      <li>
-        <b>Solve:</b> The Bacon Path.
-      </li>
-    </ol>
-  </BuiltInGuideSidebarSlide>,
-  <BuiltInGuideSidebarSlide key="s2">
-    <h3>Create</h3>
-    <p className="lead">
-      <em>Create the movie graph</em>
-    </p>
-    <p>
-      Use the following code block to create the movie graph. It contains a
-      single Cypher query statement composed of multiple <code>CREATE</code>{' '}
-      clauses.
-    </p>
-    <p>
-      <b>NOTE: </b> This guide assumes that you use an empty graph. If it
-      contains data, see page 9 on how to clean it up.
-    </p>
-    <hr />
-    <ol>
-      <li>
-        Click this code block and bring it into the Editor:
-        <pre className="pre-scrollable code runnable">
-          {`CREATE (TheMatrix:Movie {title:'The Matrix', released:1999, tagline:'Welcome to the Real World'})
+function Slide1() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <p>
+        <em>{t('movie.s1.desc')}</em>
+      </p>
+      <p>{t('movie.s1.showHow')}</p>
+      <ol className="big ">
+        <li>
+          <b>{t('movie.s1.load')}</b>
+        </li>
+        <li>
+          <b>{t('movie.s1.constrain')}</b>
+        </li>
+        <li>
+          <b>{t('movie.s1.index')}</b>
+        </li>
+        <li>
+          <b>{t('movie.s1.find')}</b>
+        </li>
+        <li>
+          <b>{t('movie.s1.query')}</b>
+        </li>
+        <li>
+          <b>{t('movie.s1.solve')}</b>
+        </li>
+      </ol>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+function Slide2() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('movie.s2.title')}</h3>
+      <p className="lead">
+        <em>{t('movie.s2.lead')}</em>
+      </p>
+      <p>
+        {t('movie.s2.desc')} <code>CREATE</code> clauses.
+      </p>
+      <p>
+        <b>NOTE: </b> {t('movie.s2.note')}
+      </p>
+      <hr />
+      <ol>
+        <li>
+          {t('movie.s2.clickCode')}
+          <pre className="pre-scrollable code runnable">
+            {`CREATE (TheMatrix:Movie {title:'The Matrix', released:1999, tagline:'Welcome to the Real World'})
       CREATE (Keanu:Person {name:'Keanu Reeves', born:1964})
       CREATE (Carrie:Person {name:'Carrie-Anne Moss', born:1967})
       CREATE (Laurence:Person {name:'Laurence Fishburne', born:1961})
@@ -582,290 +583,337 @@ const slides = [
 
       WITH TomH as a
       MATCH (a)-[:ACTED_IN]->(m)<-[:DIRECTED]-(d) RETURN a,m,d LIMIT 10;`}
-        </pre>
-      </li>
-      <li>
-        Run the Cypher code by clicking the <b>Run</b> button.
-      </li>
-      <li> Wait for the operation to finish.</li>
-    </ol>
-    <hr />
-    <p>
-      <a help-topic="help">:help</a> <a help-topic="create">CREATE</a>{' '}
-      <a help-topic="with">WITH</a> <a help-topic="match">MATCH</a>{' '}
-      <a help-topic="return">RETURN</a>
-    </p>
-  </BuiltInGuideSidebarSlide>,
-  <BuiltInGuideSidebarSlide key="s3">
-    <h3>Create constraints</h3>
-    <p className="lead">
-      <em>Unique node property constraints</em>
-    </p>
-    <p>
-      Create unique node property constraints to ensure that property values are
-      unique for all nodes with a specific label. Adding the unique constraint,
-      implicitly adds an index on that property.
-    </p>
-    <pre className="pre-scrollable code runnable">
-      CREATE CONSTRAINT FOR (n:Movie) REQUIRE (n.title) IS UNIQUE
-    </pre>
-    <pre className="pre-scrollable code runnable">
-      CREATE CONSTRAINT FOR (n:Person) REQUIRE (n.name) IS UNIQUE
-    </pre>
-    <hr />
-    <p>
-      <a help-topic="help">:help</a> <a help-topic="cypher">cypher</a>{' '}
-      <a help-topic="create-constraint">CREATE CONSTRAINT</a>
-    </p>
-  </BuiltInGuideSidebarSlide>,
-  <BuiltInGuideSidebarSlide key="s4">
-    <h3>Index nodes</h3>
-    <p className="lead">
-      <em>
-        Create indexes on one or more properties for all nodes that have a given
-        label. Indexes are used to increase search performance.
-      </em>
-    </p>
-    <pre className="pre-scrollable code runnable">
-      CREATE INDEX FOR (m:Movie) ON (m.released)
-    </pre>
-    <hr />
-    <p>
-      <a help-topic="help">:help</a> <a help-topic="cypher">cypher</a>{' '}
-      <a help-topic="create-index">CREATE INDEX</a>
-    </p>
-  </BuiltInGuideSidebarSlide>,
-  <BuiltInGuideSidebarSlide key="s5">
-    <h3>Find</h3>
-    <p className="lead">
-      <em>Find individual nodes</em>
-    </p>
-    <ol>
-      <li>Run any of the following query examples.</li>
-      <li>Notice the syntax pattern.</li>
-      <li>Try looking for other movies or actors.</li>
-    </ol>
-    <hr />
-    <ul className="undecorated">
-      <li>
-        {`Find the actor named "Tom Hanks"`}:
-        <pre className="pre-scrollable code runnable">
-          {'MATCH (tom:Person {name: "Tom Hanks"}) RETURN tom'}
-        </pre>
-      </li>
-      <li>
-        {`Find the movie with title "Cloud Atlas":`}
-        <pre className="pre-scrollable code runnable">
-          {'MATCH (cloudAtlas:Movie {title: "Cloud Atlas"}) RETURN cloudAtlas'}
-        </pre>
-      </li>
-      <li>
-        {' '}
-        Find 10 people and return their names:
-        <pre className="pre-scrollable code runnable">
-          MATCH (people:Person) RETURN people.name LIMIT 10
-        </pre>
-      </li>
-      <li>
-        Find movies released in the 1990s and return their titles.
-        <pre className="pre-scrollable code runnable">
-          {
-            'MATCH (nineties:Movie) WHERE nineties.released >= 1990 AND nineties.released < 2000 RETURN nineties.title'
-          }
-        </pre>
-      </li>
-    </ul>
-    <hr />
-    <p>
-      <a help-topic="help">:help</a> <a help-topic="match">MATCH</a>{' '}
-      <a help-topic="where">WHERE</a> <a help-topic="return">RETURN</a>
-    </p>
-  </BuiltInGuideSidebarSlide>,
-  <BuiltInGuideSidebarSlide key="s6">
-    <h3>Query</h3>
-    <p className="lead">
-      <em>Find patterns</em>
-    </p>
-    <p>
-      Use the type of the relationship to find patterns within the graph, for
-      example, <code>ACTED_IN</code> or <code>DIRECTED</code>. What other
-      relationships exist?
-    </p>
-    <hr />
-    <ul className="undecorated">
-      <li>
-        What movies did Tom Hanks act in?
-        <pre className="pre-scrollable code runnable">
-          {
-            'MATCH (tom:Person {name: "Tom Hanks"})-[:ACTED_IN]->(tomHanksMovies) RETURN tom,tomHanksMovies'
-          }
-        </pre>
-      </li>
-      <li>
-        {`Who directed "Cloud Atlas"?`}
-        <pre className="pre-scrollable code runnable">
-          {
-            'MATCH (cloudAtlas:Movie {title: "Cloud Atlas"})<-[:DIRECTED]-(directors) RETURN directors.name'
-          }
-        </pre>
-      </li>
-      <li>
-        {`Who were Tom Hanks' co-actors?`}
-        <pre className="pre-scrollable code runnable">
-          {
-            'MATCH (tom:Person {name:"Tom Hanks"})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors) RETURN DISTINCT coActors.name'
-          }
-        </pre>
-      </li>
-      <li>
-        {`How people are related to "Cloud Atlas"?`}
-        <pre className="pre-scrollable code runnable">
-          {
-            'MATCH (people:Person)-[relatedTo]-(:Movie {title: "Cloud Atlas"}) RETURN people.name, Type(relatedTo), relatedTo.roles'
-          }
-        </pre>
-      </li>
-    </ul>
-    <hr />
-    <p>
-      <a help-topic="help">:help</a> <a help-topic="match">MATCH</a>{' '}
-      <a help-topic="return">RETURN</a>
-    </p>
-  </BuiltInGuideSidebarSlide>,
-  <BuiltInGuideSidebarSlide key="s7">
-    <h3>Solve</h3>
-    <p className="lead">
-      <em>Six Degrees of Kevin Bacon</em>
-    </p>
-    <p>
-      {`You might have heard of the classic "Six Degrees of Kevin Bacon". That is simply the shortest path between two nodes, called the "Bacon Path".`}
-    </p>
-    <hr />
-    <ul className="undecorated">
-      <li>
-        {`Use variable length patterns to find movies and actors up to 4 "hops" away from Kevin Bacon.`}
-        <pre className="pre-scrollable code runnable">
-          {`MATCH (bacon:Person {name:"Kevin Bacon"})-[*1..4]-(hollywood)
+          </pre>
+        </li>
+        <li>{t('movie.s2.runButton')}</li>
+        <li>{t('movie.s2.wait')}</li>
+      </ol>
+      <hr />
+      <p>
+        <a help-topic="help">:help</a> <a help-topic="create">CREATE</a>{' '}
+        <a help-topic="with">WITH</a> <a help-topic="match">MATCH</a>{' '}
+        <a help-topic="return">RETURN</a>
+      </p>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+function Slide3() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('movie.s3.title')}</h3>
+      <p className="lead">
+        <em>{t('movie.s3.lead')}</em>
+      </p>
+      <p>{t('movie.s3.desc')}</p>
+      <pre className="pre-scrollable code runnable">
+        CREATE CONSTRAINT FOR (n:Movie) REQUIRE (n.title) IS UNIQUE
+      </pre>
+      <pre className="pre-scrollable code runnable">
+        CREATE CONSTRAINT FOR (n:Person) REQUIRE (n.name) IS UNIQUE
+      </pre>
+      <hr />
+      <p>
+        <a help-topic="help">:help</a> <a help-topic="cypher">cypher</a>{' '}
+        <a help-topic="create-constraint">CREATE CONSTRAINT</a>
+      </p>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+function Slide4() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('movie.s4.title')}</h3>
+      <p className="lead">
+        <em>{t('movie.s4.lead')}</em>
+      </p>
+      <pre className="pre-scrollable code runnable">
+        CREATE INDEX FOR (m:Movie) ON (m.released)
+      </pre>
+      <hr />
+      <p>
+        <a help-topic="help">:help</a> <a help-topic="cypher">cypher</a>{' '}
+        <a help-topic="create-index">CREATE INDEX</a>
+      </p>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+function Slide5() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('movie.s5.title')}</h3>
+      <p className="lead">
+        <em>{t('movie.s5.lead')}</em>
+      </p>
+      <ol>
+        <li>{t('movie.s5.li1')}</li>
+        <li>{t('movie.s5.li2')}</li>
+        <li>{t('movie.s5.li3')}</li>
+      </ol>
+      <hr />
+      <ul className="undecorated">
+        <li>
+          {t('movie.s5.findTom')}
+          <pre className="pre-scrollable code runnable">
+            {'MATCH (tom:Person {name: "Tom Hanks"}) RETURN tom'}
+          </pre>
+        </li>
+        <li>
+          {t('movie.s5.findCloud')}
+          <pre className="pre-scrollable code runnable">
+            {
+              'MATCH (cloudAtlas:Movie {title: "Cloud Atlas"}) RETURN cloudAtlas'
+            }
+          </pre>
+        </li>
+        <li>
+          {t('movie.s5.find10')}
+          <pre className="pre-scrollable code runnable">
+            MATCH (people:Person) RETURN people.name LIMIT 10
+          </pre>
+        </li>
+        <li>
+          {t('movie.s5.find90s')}
+          <pre className="pre-scrollable code runnable">
+            {
+              'MATCH (nineties:Movie) WHERE nineties.released >= 1990 AND nineties.released < 2000 RETURN nineties.title'
+            }
+          </pre>
+        </li>
+      </ul>
+      <hr />
+      <p>
+        <a help-topic="help">:help</a> <a help-topic="match">MATCH</a>{' '}
+        <a help-topic="where">WHERE</a> <a help-topic="return">RETURN</a>
+      </p>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+function Slide6() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('movie.s6.title')}</h3>
+      <p className="lead">
+        <em>{t('movie.s6.lead')}</em>
+      </p>
+      <p>
+        {t('movie.s6.desc')} <code>ACTED_IN</code> or <code>DIRECTED</code>.
+      </p>
+      <hr />
+      <ul className="undecorated">
+        <li>
+          {t('movie.s6.q1')}
+          <pre className="pre-scrollable code runnable">
+            {
+              'MATCH (tom:Person {name: "Tom Hanks"})-[:ACTED_IN]->(tomHanksMovies) RETURN tom,tomHanksMovies'
+            }
+          </pre>
+        </li>
+        <li>
+          {t('movie.s6.q2')}
+          <pre className="pre-scrollable code runnable">
+            {
+              'MATCH (cloudAtlas:Movie {title: "Cloud Atlas"})<-[:DIRECTED]-(directors) RETURN directors.name'
+            }
+          </pre>
+        </li>
+        <li>
+          {t('movie.s6.q3')}
+          <pre className="pre-scrollable code runnable">
+            {
+              'MATCH (tom:Person {name:"Tom Hanks"})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors) RETURN DISTINCT coActors.name'
+            }
+          </pre>
+        </li>
+        <li>
+          {t('movie.s6.q4')}
+          <pre className="pre-scrollable code runnable">
+            {
+              'MATCH (people:Person)-[relatedTo]-(:Movie {title: "Cloud Atlas"}) RETURN people.name, Type(relatedTo), relatedTo.roles'
+            }
+          </pre>
+        </li>
+      </ul>
+      <hr />
+      <p>
+        <a help-topic="help">:help</a> <a help-topic="match">MATCH</a>{' '}
+        <a help-topic="return">RETURN</a>
+      </p>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+function Slide7() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('movie.s7.title')}</h3>
+      <p className="lead">
+        <em>{t('movie.s7.lead')}</em>
+      </p>
+      <p>{t('movie.s7.desc')}</p>
+      <hr />
+      <ul className="undecorated">
+        <li>
+          {t('movie.s7.q1desc')}
+          <pre className="pre-scrollable code runnable">
+            {`MATCH (bacon:Person {name:"Kevin Bacon"})-[*1..4]-(hollywood)
 RETURN DISTINCT hollywood`}
-        </pre>
-      </li>
-      <li>
-        Use the built-in <code>shortestPath()</code>
-        {` algorithm to find the
-        "Bacon Path" to Meg Ryan.`}
-        <pre className="pre-scrollable code runnable">
-          {`MATCH p=shortestPath(
+          </pre>
+        </li>
+        <li>
+          {t('movie.s7.q2desc')}
+          <pre className="pre-scrollable code runnable">
+            {`MATCH p=shortestPath(
 (bacon:Person {name:"Kevin Bacon"})-[*]-(meg:Person {name:"Meg Ryan"})
 )
 RETURN p`}
-        </pre>
-      </li>
-    </ul>
-    <hr />
-    <p>
-      <a help-topic="help">:help</a> <a help-topic="match">MATCH</a>{' '}
-      <a help-topic="return">RETURN</a>
-    </p>
-  </BuiltInGuideSidebarSlide>,
-  <BuiltInGuideSidebarSlide key="s8">
-    <h3>Recommend</h3>
-    <p className="lead">
-      <em>Recommend new co-actors</em>
-    </p>
-    <p>
-      {`Let's recommend new co-actors for Tom Hanks. A basic recommendation approach is to find connections past an immediate neighborhood that are themselves well connected.`}
-    </p>
-    <hr />
-    <p>For Tom Hanks, that means:</p>
-    <ol>
-      <li>
-        Extend Tom Hanks co-actors to find co-co-actors who have nоt worked with
-        Tom Hanks.
-        <pre className="pre-scrollable code runnable">
-          {`MATCH (tom:Person {name:"Tom Hanks"})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors),
+          </pre>
+        </li>
+      </ul>
+      <hr />
+      <p>
+        <a help-topic="help">:help</a> <a help-topic="match">MATCH</a>{' '}
+        <a help-topic="return">RETURN</a>
+      </p>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+function Slide8() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('movie.s8.title')}</h3>
+      <p className="lead">
+        <em>{t('movie.s8.lead')}</em>
+      </p>
+      <p>{t('movie.s8.desc')}</p>
+      <hr />
+      <p>{t('movie.s8.forTom')}</p>
+      <ol>
+        <li>
+          {t('movie.s8.li1')}
+          <pre className="pre-scrollable code runnable">
+            {`MATCH (tom:Person {name:"Tom Hanks"})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors),
     (coActors)-[:ACTED_IN]->(m2)<-[:ACTED_IN]-(cocoActors)
   WHERE NOT (tom)-[:ACTED_IN]->()<-[:ACTED_IN]-(cocoActors) AND tom <> cocoActors
   RETURN cocoActors.name AS Recommended, count(*) AS Strength ORDER BY Strength DESC`}
-        </pre>
-      </li>
-      <li>
-        Find someone who can introduce Tom Hanks to his potential co-actor, in
-        this case Tom Cruise.
-        <pre className="pre-scrollable code runnable">
-          {`MATCH (tom:Person {name:"Tom Hanks"})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors),
+          </pre>
+        </li>
+        <li>
+          {t('movie.s8.li2')}
+          <pre className="pre-scrollable code runnable">
+            {`MATCH (tom:Person {name:"Tom Hanks"})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors),
   (coActors)-[:ACTED_IN]->(m2)<-[:ACTED_IN]-(cruise:Person {name:"Tom Cruise"})
 RETURN tom, m, coActors, m2, cruise`}
-        </pre>
-      </li>
-    </ol>
-    <hr />
-    <p>
-      <a help-topic="help">:help</a> <a help-topic="match">MATCH</a>{' '}
-      <a help-topic="return">RETURN</a>
-    </p>
-  </BuiltInGuideSidebarSlide>,
-  <BuiltInGuideSidebarSlide key="s9">
-    <h3>Clean up</h3>
-    <p className="lead">
-      <em>Remove the movie data set</em>
-    </p>
-    <p>When you are done experimenting, you can clean up your graph.</p>
-    <p>
-      <b>NOTE: </b>Nodes cannot be deleted if they have relationships, so you
-      need to detach the nodes to delete them.{' '}
-    </p>
-    <hr />
-    <ol>
-      <li>
-        Delete all <code>Movie</code> and <code>Person</code> nodes, and their
-        relationships.
-        <pre className="pre-scrollable code runnable">
-          MATCH (n) DETACH DELETE n
-        </pre>
-      </li>
-      <li>
-        Verify that the Movie Graph has been removed.
-        <pre className="pre-scrollable code runnable">MATCH (n) RETURN n</pre>
-      </li>
-    </ol>
-    <hr />
-    <p>
-      <a help-topic="help">:help</a> <a help-topic="delete">DELETE</a>{' '}
-    </p>
-  </BuiltInGuideSidebarSlide>,
-  <BuiltInGuideSidebarSlide key="s10">
-    <h3>Next steps</h3>
-    <ul className="undecorated">
-      <li>
-        <a data-exec="guide northwind-graph">Northwind Graph</a> – from RDBMS to
-        graph.
-      </li>
-      <li>
-        <DrawerExternalLink href="https://portal.graphgist.org/">
-          Explore more guides: Graph Gists Portal
-        </DrawerExternalLink>
-      </li>
-    </ul>
-    <br />
-    <h3>Documentation</h3>
-    <ul className="undecorated">
-      <li>
-        <ManualLink chapter="cypher-manual" page="/">
-          Neo4j Cypher Manual
-        </ManualLink>
-      </li>
-      <li>
-        <ManualLink chapter="cypher-refcard" page="/">
-          Cypher Refcard
-        </ManualLink>
-      </li>
-      <li>
-        <DrawerExternalLink href="https://neo4j.com/developer/">
-          Developer resources
-        </DrawerExternalLink>
-      </li>
-    </ul>
-  </BuiltInGuideSidebarSlide>
+          </pre>
+        </li>
+      </ol>
+      <hr />
+      <p>
+        <a help-topic="help">:help</a> <a help-topic="match">MATCH</a>{' '}
+        <a help-topic="return">RETURN</a>
+      </p>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+function Slide9() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('movie.s9.title')}</h3>
+      <p className="lead">
+        <em>{t('movie.s9.lead')}</em>
+      </p>
+      <p>{t('movie.s9.desc')}</p>
+      <p>
+        <b>NOTE: </b>
+        {t('movie.s9.note')}
+      </p>
+      <hr />
+      <ol>
+        <li>
+          {t('movie.s9.li1')}
+          <pre className="pre-scrollable code runnable">
+            MATCH (n) DETACH DELETE n
+          </pre>
+        </li>
+        <li>
+          {t('movie.s9.li2')}
+          <pre className="pre-scrollable code runnable">MATCH (n) RETURN n</pre>
+        </li>
+      </ol>
+      <hr />
+      <p>
+        <a help-topic="help">:help</a> <a help-topic="delete">DELETE</a>{' '}
+      </p>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+function Slide10() {
+  const t = useT()
+  return (
+    <BuiltInGuideSidebarSlide>
+      <h3>{t('movie.s10.title')}</h3>
+      <ul className="undecorated">
+        <li>
+          <a data-exec="guide northwind-graph">
+            {t('movie.s10.northwindLink')}
+          </a>
+        </li>
+        <li>
+          <DrawerExternalLink href="https://portal.graphgist.org/">
+            {t('movie.s10.gistLink')}
+          </DrawerExternalLink>
+        </li>
+      </ul>
+      <br />
+      <h3>{t('movie.s10.docsTitle')}</h3>
+      <ul className="undecorated">
+        <li>
+          <ManualLink chapter="cypher-manual" page="/">
+            Neo4j Cypher Manual
+          </ManualLink>
+        </li>
+        <li>
+          <ManualLink chapter="cypher-refcard" page="/">
+            Cypher Refcard
+          </ManualLink>
+        </li>
+        <li>
+          <DrawerExternalLink href="https://neo4j.com/developer/">
+            Developer resources
+          </DrawerExternalLink>
+        </li>
+      </ul>
+    </BuiltInGuideSidebarSlide>
+  )
+}
+
+const title = 'Movie Graph Guide'
+const category = 'graphExamples'
+const identifier = 'movie-graph'
+const slides = [
+  <Slide1 key="s1" />,
+  <Slide2 key="s2" />,
+  <Slide3 key="s3" />,
+  <Slide4 key="s4" />,
+  <Slide5 key="s5" />,
+  <Slide6 key="s6" />,
+  <Slide7 key="s7" />,
+  <Slide8 key="s8" />,
+  <Slide9 key="s9" />,
+  <Slide10 key="s10" />
 ]
 
 export default { title, category, identifier, slides }

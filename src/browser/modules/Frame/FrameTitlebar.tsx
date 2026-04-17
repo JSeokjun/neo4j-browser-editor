@@ -21,6 +21,8 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { Action, Dispatch } from 'redux'
 
+import { useT } from 'shared/i18n'
+
 import {
   CloseIcon,
   ContractIcon,
@@ -79,6 +81,7 @@ function FrameTitlebar({
   trackFullscreenToggle,
   trackCollapseToggle
 }: FrameTitleBarProps) {
+  const t = useT()
   const fullscreenIcon = isFullscreen ? (
     <ContractIcon width={10} />
   ) : (
@@ -93,7 +96,7 @@ function FrameTitlebar({
   return (
     <TitleBarHeader>
       <FrameControlButton
-        title="Pin at top"
+        title={t('frame.pin')}
         onClick={() => {
           togglePin()
           // using frame.isPinned causes issues when there are multiple frames in one
@@ -104,7 +107,7 @@ function FrameTitlebar({
         <PinIcon width={10} />
       </FrameControlButton>
       <FrameControlButton
-        title={isCollapsed ? 'Expand' : 'Collapse'}
+        title={isCollapsed ? t('frame.expand') : t('frame.collapse')}
         onClick={() => {
           collapseToggle()
           trackCollapseToggle()
@@ -113,7 +116,9 @@ function FrameTitlebar({
         {expandCollapseIcon}
       </FrameControlButton>
       <FrameControlButton
-        title={isFullscreen ? 'Close fullscreen' : 'Fullscreen'}
+        title={
+          isFullscreen ? t('frame.closeFullscreen') : t('frame.fullscreen')
+        }
         onClick={() => {
           fullscreenToggle()
           trackFullscreenToggle()
@@ -121,7 +126,7 @@ function FrameTitlebar({
       >
         {fullscreenIcon}
       </FrameControlButton>
-      <FrameControlButton title="Close" onClick={onCloseClick}>
+      <FrameControlButton title={t('frame.close')} onClick={onCloseClick}>
         <CloseIcon width={10} />
       </FrameControlButton>
     </TitleBarHeader>

@@ -240,11 +240,25 @@ export class GraphVisualizer extends Component<
         {} as Record<string, string>
       )
 
-      const nextNodes = this.state.nodes.map(node =>
-        node.id === vizItem.item.id
-          ? { ...node, properties, propertyTypes }
-          : node
+      const existingNode = this.state.nodes.find(
+        node => node.id === vizItem.item.id
       )
+      const nextNodes = existingNode
+        ? this.state.nodes.map(node =>
+            node.id === vizItem.item.id
+              ? { ...node, properties, propertyTypes }
+              : node
+          )
+        : [
+            ...this.state.nodes,
+            {
+              id: vizItem.item.id,
+              elementId: vizItem.item.elementId,
+              labels: vizItem.item.labels,
+              properties,
+              propertyTypes
+            }
+          ]
 
       const nextSelectedItem: VizItem = {
         ...vizItem,
@@ -277,11 +291,27 @@ export class GraphVisualizer extends Component<
         {} as Record<string, string>
       )
 
-      const nextRelationships = this.state.relationships.map(relationship =>
-        relationship.id === vizItem.item.id
-          ? { ...relationship, properties, propertyTypes }
-          : relationship
+      const existingRel = this.state.relationships.find(
+        rel => rel.id === vizItem.item.id
       )
+      const nextRelationships = existingRel
+        ? this.state.relationships.map(relationship =>
+            relationship.id === vizItem.item.id
+              ? { ...relationship, properties, propertyTypes }
+              : relationship
+          )
+        : [
+            ...this.state.relationships,
+            {
+              id: vizItem.item.id,
+              elementId: vizItem.item.elementId,
+              startNodeId: vizItem.item.startNodeId ?? '',
+              endNodeId: vizItem.item.endNodeId ?? '',
+              type: vizItem.item.type ?? '',
+              properties,
+              propertyTypes
+            }
+          ]
 
       const nextSelectedItem: VizItem = {
         ...vizItem,
@@ -309,9 +339,29 @@ export class GraphVisualizer extends Component<
       return
     }
 
-    const nextNodes = this.state.nodes.map(node =>
-      node.id === vizItem.item.id ? { ...node, labels } : node
+    const existingNode = this.state.nodes.find(
+      node => node.id === vizItem.item.id
     )
+    const nextNodes = existingNode
+      ? this.state.nodes.map(node =>
+          node.id === vizItem.item.id ? { ...node, labels } : node
+        )
+      : [
+          ...this.state.nodes,
+          {
+            id: vizItem.item.id,
+            elementId: vizItem.item.elementId,
+            labels,
+            properties: vizItem.item.propertyList.reduce(
+              (acc, p) => ({ ...acc, [p.key]: p.value }),
+              {} as Record<string, string>
+            ),
+            propertyTypes: vizItem.item.propertyList.reduce(
+              (acc, p) => ({ ...acc, [p.key]: p.type }),
+              {} as Record<string, string>
+            )
+          }
+        ]
 
     const nextSelectedItem: VizItem = {
       ...vizItem,
@@ -450,7 +500,7 @@ export class GraphVisualizer extends Component<
   }
 
   onItemMouseOver(item: VizItem): void {
-    this.setHoveredItem(item)
+    this.setHoveredItem(this.correctVizItem(item))
   }
 
   mounted = true
@@ -460,8 +510,25 @@ export class GraphVisualizer extends Component<
     }
   }, 200)
 
+  private correctVizItem(item: VizItem): VizItem {
+    if (item.type === 'node') {
+      const stateNode = this.state.nodes.find(n => n.id === item.item.id)
+      if (stateNode) {
+        return this.asNodeSelectionItem(stateNode)
+      }
+    } else if (item.type === 'relationship') {
+      const stateRel = this.state.relationships.find(r => r.id === item.item.id)
+      if (stateRel) {
+        return this.asRelationshipSelectionItem(stateRel)
+      }
+    }
+    return item
+  }
+
   onItemSelect(selectedItem: VizItem): void {
-    this.setState({ selectedItem })
+    // Reconstruct VizItem from internal state to include pending property edits,
+    // since D3 NodeModel/RelationshipModel objects retain stale propertyList data.
+    this.setState({ selectedItem: this.correctVizItem(selectedItem) })
     if (selectedItem.type === 'node' || selectedItem.type === 'relationship') {
       this.props.onSelectionChange?.({
         itemType: selectedItem.type,

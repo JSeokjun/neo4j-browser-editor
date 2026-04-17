@@ -321,7 +321,13 @@ async function fetchTrialStatus(store: any) {
 }
 
 const switchToRequestedDb = (store: any) => {
-  if (getUseDb(store.getState())) return
+  if (getUseDb(store.getState())) {
+    // Database selection already set (e.g. restored before APP_START reset,
+    // or set by a previous cycle). Ensure bolt driver is aligned.
+    bolt.useDb(getUseDb(store.getState()))
+    getLabelsAndTypes(store)
+    return
+  }
 
   const databases = getDatabases(store.getState())
   const activeConnection = getActiveConnectionData(store.getState())
@@ -366,8 +372,6 @@ const switchToRequestedDb = (store: any) => {
     )
     if (wantedDb) {
       store.dispatch(useDb(wantedDb.name))
-      // update labels and such for new db
-      getLabelsAndTypes(store)
     } else {
       // this will show the db not found frame
       store.dispatch(executeCommand(`:use ${requestedUseDb}`), {
@@ -378,6 +382,12 @@ const switchToRequestedDb = (store: any) => {
   } else {
     switchToLastUsedOrDefaultDb()
   }
+
+  // Fetch metadata immediately for the newly selected database.
+  // useDb() dispatch above updated the store synchronously (Redux reducer),
+  // so getCurrentDatabase() will resolve correctly. This avoids waiting for
+  // the FORCE_FETCH → pollDbMeta cycle which is throttled by DB_META_DONE.
+  getLabelsAndTypes(store)
 }
 
 async function pollDbMeta(store: any) {
@@ -388,16 +398,17 @@ async function pollDbMeta(store: any) {
     return
   }
 
-  // Cluster setups where the default database is unavailable,
-  // get labels and types takes a long time to finish and it shouldn't
-  // be blocking the rest of the bootup process, so we don't await the promise
-  getLabelsAndTypes(store)
-
   await Promise.all([
     getFunctionsAndProcedures(store),
     clusterRole(store),
     databaseList(store)
   ])
+
+  // Fetch labels and types AFTER databaseList completes, so that
+  // getCurrentDatabase() can resolve the selected database correctly.
+  // Not awaited: in cluster setups where the database is unavailable,
+  // this can take a long time and shouldn't block the bootup process.
+  getLabelsAndTypes(store)
 }
 
 export const dbMetaEpic = (some$: any, store: any) =>

@@ -57,8 +57,9 @@ function ExpandableValue({ value, width, type, t }: ExpandableValueProps) {
     setExpanded(true)
   }
 
-  let valueShown = expanded ? value : value.slice(0, maxLength)
-  const valueIsTrimmed = valueShown.length !== value.length
+  const valueStr = typeof value === 'string' ? value : String(value)
+  let valueShown = expanded ? valueStr : valueStr.slice(0, maxLength)
+  const valueIsTrimmed = valueShown.length !== valueStr.length
   valueShown += valueIsTrimmed ? ELLIPSIS : ''
 
   return (

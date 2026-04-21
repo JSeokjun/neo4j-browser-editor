@@ -136,6 +136,10 @@ export function DetailsPane({
     onRelationshipTypeChange?.(nextType)
   }
 
+  const isTemporary =
+    String(vizItem.item.id).startsWith('temp-') ||
+    String(vizItem.item.elementId).startsWith('temp-')
+
   const idProperty = {
     key: '<id>',
     value: `${vizItem.item.id}`,
@@ -147,8 +151,7 @@ export function DetailsPane({
     type: 'String'
   }
   const allItemProperties = [
-    idProperty,
-    elementIdProperty,
+    ...(isTemporary ? [] : [idProperty, elementIdProperty]),
     ...propertyList
   ].sort((a, b) => (a.key < b.key ? -1 : 1))
   const visibleItemProperties = allItemProperties.slice(0, maxPropertiesCount)

@@ -129,7 +129,7 @@ export const PropertiesTable = ({
     if (!editable) {
       return
     }
-    if (field === 'key' && readOnlyKeySet.has(properties[index].key)) {
+    if (readOnlyKeySet.has(properties[index].key)) {
       return
     }
     setEditingCell({ index, field })
